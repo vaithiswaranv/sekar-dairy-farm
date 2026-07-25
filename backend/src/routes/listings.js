@@ -75,8 +75,8 @@ router.post('/', auth, async (req, res) => {
       gender,
       breed,
       description,
-      ageYears: Number(ageYears),
-      ageMonths: Number(ageMonths),
+      ageYears: String(ageYears),
+      ageMonths: String(ageMonths),
       teethCount: String(teethCount),
       milkCapacity: isAdultFemale && milkCapacity !== null && milkCapacity !== undefined && milkCapacity !== '' ? String(milkCapacity) : '',
       price: Number(price),
@@ -105,8 +105,8 @@ router.put('/:id', auth, async (req, res) => {
     const updatePayload = { ...req.body };
     
     // Cast numeric fields if present in update payload
-    if (updatePayload.ageYears !== undefined) updatePayload.ageYears = Number(updatePayload.ageYears);
-    if (updatePayload.ageMonths !== undefined) updatePayload.ageMonths = Number(updatePayload.ageMonths);
+    if (updatePayload.ageYears !== undefined) updatePayload.ageYears = String(updatePayload.ageYears);
+    if (updatePayload.ageMonths !== undefined) updatePayload.ageMonths = String(updatePayload.ageMonths);
     if (updatePayload.teethCount !== undefined) updatePayload.teethCount = String(updatePayload.teethCount);
     if (updatePayload.price !== undefined) updatePayload.price = Number(updatePayload.price);
     

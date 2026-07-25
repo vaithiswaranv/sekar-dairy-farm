@@ -391,8 +391,8 @@ function App() {
                       <div className="spec-item">
                         <span className="spec-label">Age</span>
                         <span className="spec-value">
-                          {item.ageYears > 0 ? `${item.ageYears}y ` : ''}
-                          {item.ageMonths > 0 ? `${item.ageMonths}m` : (item.ageYears === 0 || !item.ageYears) ? `${item.ageMonths || 0}m` : ''}
+                          {item.ageYears ? `${item.ageYears}${/y/i.test(item.ageYears.toString()) ? '' : 'y'} ` : ''}
+                          {item.ageMonths ? `${item.ageMonths}${/m/i.test(item.ageMonths.toString()) ? '' : 'm'}` : ''}
                         </span>
                       </div>
                       <div className="spec-item">

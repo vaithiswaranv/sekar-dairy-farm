@@ -330,8 +330,8 @@ function App() {
       gender,
       breed,
       description,
-      ageYears: Number(ageYears),
-      ageMonths: Number(ageMonths),
+      ageYears: String(ageYears),
+      ageMonths: String(ageMonths),
       teethCount: String(teethCount),
       milkCapacity: finalMilk,
       price: Number(price),
@@ -704,8 +704,8 @@ function App() {
                       </td>
                       <td>{item.breed}</td>
                       <td>
-                        {item.ageYears > 0 ? `${item.ageYears}y ` : ''}
-                        {item.ageMonths > 0 ? `${item.ageMonths}m` : (item.ageYears === 0 || !item.ageYears) ? `${item.ageMonths || 0}m` : ''}
+                        {item.ageYears ? `${item.ageYears}${/y/i.test(item.ageYears.toString()) ? '' : 'y'} ` : ''}
+                        {item.ageMonths ? `${item.ageMonths}${/m/i.test(item.ageMonths.toString()) ? '' : 'm'}` : ''}
                       </td>
                       <td>
                         {item.milkCapacity !== null && item.milkCapacity !== undefined && item.milkCapacity !== '' 
@@ -830,23 +830,22 @@ function App() {
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
                         <input 
-                          type="number" 
+                          type="text" 
                           className="form-input" 
                           value={ageYears} 
                           onChange={(e) => setAgeYears(e.target.value)} 
-                          min="0"
+                          placeholder="e.g. 2, 2.5" 
                           required 
                         />
                         <span style={{ fontSize: '0.75rem', fontWeight: 600 }}>Yrs</span>
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
                         <input 
-                          type="number" 
+                          type="text" 
                           className="form-input" 
                           value={ageMonths} 
                           onChange={(e) => setAgeMonths(e.target.value)} 
-                          min="0"
-                          max="11"
+                          placeholder="e.g. 6, unknown" 
                           required 
                         />
                         <span style={{ fontSize: '0.75rem', fontWeight: 600 }}>Mos</span>

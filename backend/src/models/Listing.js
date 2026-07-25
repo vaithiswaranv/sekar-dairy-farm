@@ -29,15 +29,14 @@ const ListingSchema = new mongoose.Schema({
     trim: true
   },
   ageYears: {
-    type: Number,
+    type: String,
     required: true,
-    min: 0
+    trim: true
   },
   ageMonths: {
-    type: Number,
-    required: true,
-    min: 0,
-    max: 11
+    type: String,
+    trim: true,
+    default: ''
   },
   teethCount: {
     type: String,
