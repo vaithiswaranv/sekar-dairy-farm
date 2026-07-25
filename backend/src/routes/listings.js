@@ -52,8 +52,7 @@ router.post('/', auth, async (req, res) => {
     gender,
     breed, 
     description, 
-    ageYears, 
-    ageMonths, 
+    age, 
     teethCount, 
     milkCapacity, 
     price, 
@@ -63,8 +62,8 @@ router.post('/', auth, async (req, res) => {
   } = req.body;
 
   // Mandatory fields validation
-  if (!animalName || !animalType || !gender || !breed || !description || ageYears === undefined || ageMonths === undefined || teethCount === undefined || price === undefined) {
-    return res.status(400).json({ message: 'Please include all mandatory fields: Animal Name, Category, Gender, Breed, Description, Age (years & months), Teeth count, and Price.' });
+  if (!animalName || !animalType || !gender || !breed || !description || age === undefined || teethCount === undefined || price === undefined) {
+    return res.status(400).json({ message: 'Please include all mandatory fields: Animal Name, Category, Gender, Breed, Description, Age, Teeth count, and Price.' });
   }
 
   try {
@@ -75,8 +74,7 @@ router.post('/', auth, async (req, res) => {
       gender,
       breed,
       description,
-      ageYears: String(ageYears),
-      ageMonths: String(ageMonths),
+      age: String(age),
       teethCount: String(teethCount),
       milkCapacity: isAdultFemale && milkCapacity !== null && milkCapacity !== undefined && milkCapacity !== '' ? String(milkCapacity) : '',
       price: Number(price),
@@ -104,9 +102,8 @@ router.put('/:id', auth, async (req, res) => {
 
     const updatePayload = { ...req.body };
     
-    // Cast numeric fields if present in update payload
-    if (updatePayload.ageYears !== undefined) updatePayload.ageYears = String(updatePayload.ageYears);
-    if (updatePayload.ageMonths !== undefined) updatePayload.ageMonths = String(updatePayload.ageMonths);
+    // Cast fields if present in update payload
+    if (updatePayload.age !== undefined) updatePayload.age = String(updatePayload.age);
     if (updatePayload.teethCount !== undefined) updatePayload.teethCount = String(updatePayload.teethCount);
     if (updatePayload.price !== undefined) updatePayload.price = Number(updatePayload.price);
     

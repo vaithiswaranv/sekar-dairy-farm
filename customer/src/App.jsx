@@ -390,10 +390,7 @@ function App() {
                     <div className="specs-grid">
                       <div className="spec-item">
                         <span className="spec-label">Age</span>
-                        <span className="spec-value">
-                          {item.ageYears ? `${item.ageYears}${/y/i.test(item.ageYears.toString()) ? '' : 'y'} ` : ''}
-                          {item.ageMonths ? `${item.ageMonths}${/m/i.test(item.ageMonths.toString()) ? '' : 'm'}` : ''}
-                        </span>
+                        <span className="spec-value">{item.age}</span>
                       </div>
                       <div className="spec-item">
                         <span className="spec-label">Teeth</span>

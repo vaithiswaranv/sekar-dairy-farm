@@ -30,8 +30,7 @@ function App() {
   const [gender, setGender] = useState('Female');
   const [breed, setBreed] = useState('');
   const [description, setDescription] = useState('');
-  const [ageYears, setAgeYears] = useState('0');
-  const [ageMonths, setAgeMonths] = useState('0');
+  const [age, setAge] = useState('');
   const [teethCount, setTeethCount] = useState('');
   const [milkCapacity, setMilkCapacity] = useState('');
   const [price, setPrice] = useState('');
@@ -266,8 +265,7 @@ function App() {
       setGender(listing.gender || 'Female');
       setBreed(listing.breed);
       setDescription(listing.description);
-      setAgeYears(listing.ageYears !== undefined ? listing.ageYears.toString() : '0');
-      setAgeMonths(listing.ageMonths !== undefined ? listing.ageMonths.toString() : '0');
+      setAge(listing.age !== undefined ? listing.age.toString() : '');
       setTeethCount(listing.teethCount !== undefined ? listing.teethCount.toString() : '');
       setMilkCapacity(listing.milkCapacity !== null && listing.milkCapacity !== undefined ? listing.milkCapacity.toString() : '');
       setPrice(listing.price !== undefined ? listing.price.toString() : '');
@@ -294,8 +292,7 @@ function App() {
       setGender('Female');
       setBreed('');
       setDescription('');
-      setAgeYears('0');
-      setAgeMonths('0');
+      setAge('');
       setTeethCount('');
       setMilkCapacity('');
       setPrice('');
@@ -310,7 +307,7 @@ function App() {
   // Handle Form Submit
   const handleSaveListing = async (e) => {
     e.preventDefault();
-    if (!animalName || !animalType || !gender || !breed || !description || ageYears === '' || ageMonths === '' || !teethCount || !price) {
+    if (!animalName || !animalType || !gender || !breed || !description || age === '' || !teethCount || !price) {
       setAlert({ type: 'error', message: 'Please fill in all mandatory fields.' });
       return;
     }
@@ -330,8 +327,7 @@ function App() {
       gender,
       breed,
       description,
-      ageYears: String(ageYears),
-      ageMonths: String(ageMonths),
+      age: String(age),
       teethCount: String(teethCount),
       milkCapacity: finalMilk,
       price: Number(price),
@@ -703,10 +699,7 @@ function App() {
                         </span>
                       </td>
                       <td>{item.breed}</td>
-                      <td>
-                        {item.ageYears ? `${item.ageYears}${/y/i.test(item.ageYears.toString()) ? '' : 'y'} ` : ''}
-                        {item.ageMonths ? `${item.ageMonths}${/m/i.test(item.ageMonths.toString()) ? '' : 'm'}` : ''}
-                      </td>
+                      <td>{item.age}</td>
                       <td>
                         {item.milkCapacity !== null && item.milkCapacity !== undefined && item.milkCapacity !== '' 
                           ? `${item.milkCapacity} Liters` 
@@ -827,30 +820,14 @@ function App() {
                   
                   <div className="form-group">
                     <label className="form-label">Age *</label>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                        <input 
-                          type="text" 
-                          className="form-input" 
-                          value={ageYears} 
-                          onChange={(e) => setAgeYears(e.target.value)} 
-                          placeholder="e.g. 2, 2.5" 
-                          required 
-                        />
-                        <span style={{ fontSize: '0.75rem', fontWeight: 600 }}>Yrs</span>
-                      </div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                        <input 
-                          type="text" 
-                          className="form-input" 
-                          value={ageMonths} 
-                          onChange={(e) => setAgeMonths(e.target.value)} 
-                          placeholder="e.g. 6, unknown" 
-                          required 
-                        />
-                        <span style={{ fontSize: '0.75rem', fontWeight: 600 }}>Mos</span>
-                      </div>
-                    </div>
+                    <input 
+                      type="text" 
+                      className="form-input" 
+                      value={age} 
+                      onChange={(e) => setAge(e.target.value)} 
+                      placeholder="e.g. 2 Years 6 Months, or 2.5 Years" 
+                      required 
+                    />
                   </div>
                 </div>
 
