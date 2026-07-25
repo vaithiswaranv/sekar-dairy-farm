@@ -1,0 +1,53 @@
+[
+  {
+    "_id": "6a644c0229a4efefe6329860",
+    "animalName": "aaliya",
+    "animalType": "Cow",
+    "gender": "Female",
+    "breed": "jersey",
+    "description": "Here's a sample for you: \"This healthy, high-yielding Desi cow is in her second lactation, known for docile temperament. She produces 12 liters of quality milk daily and is well-cared-for with a balanced diet.",
+    "ageYears": 2,
+    "ageMonths": 6,
+    "teethCount": 2,
+    "milkCapacity": 20,
+    "price": 45000,
+    "status": "Available",
+    "calfKidStatus": "No Calf",
+    "media": [
+      {
+        "type": "image",
+        "url": "http://localhost:5000/uploads/1784957952324-206066535.jpg",
+        "public_id": "1784957952324-206066535.jpg"
+      }
+    ],
+    "createdAt": "2026-07-25T05:39:14.604Z"
+  },
+  {
+    "_id": "6a645e02f295d461459dd1f2",
+    "animalName": "kannili",
+    "animalType": "Goat",
+    "gender": "Female",
+    "breed": "Mor",
+    "description": "goood\n",
+    "ageYears": 6,
+    "ageMonths": 7,
+    "teethCount": 5,
+    "milkCapacity": null,
+    "price": 6000,
+    "status": "Available",
+    "calfKidStatus": "1 male , 3 female",
+    "media": [
+      {
+        "type": "image",
+        "url": "http://localhost:5000/uploads/1784962546999-649341039.webp",
+        "public_id": "1784962546999-649341039.webp"
+      },
+      {
+        "type": "image",
+        "url": "http://localhost:5000/uploads/1784962551929-569745143.webp",
+        "public_id": "1784962551929-569745143.webp"
+      }
+    ],
+    "createdAt": "2026-07-25T06:56:02.522Z"
+  }
+]
