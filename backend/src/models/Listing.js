@@ -40,14 +40,14 @@ const ListingSchema = new mongoose.Schema({
     max: 11
   },
   teethCount: {
-    type: Number,
+    type: String,
     required: true,
-    min: 0
+    trim: true
   },
   milkCapacity: {
-    type: Number, // In liters per day (optional)
-    min: 0,
-    default: null
+    type: String, // In liters per day (optional)
+    trim: true,
+    default: ''
   },
   price: {
     type: Number,

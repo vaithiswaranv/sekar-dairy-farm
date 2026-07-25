@@ -321,7 +321,7 @@ function App() {
     }
 
     const isAdultFemale = (animalType === 'Cow' || animalType === 'Goat') && gender === 'Female';
-    const finalMilk = isAdultFemale && milkCapacity !== '' ? Number(milkCapacity) : null;
+    const finalMilk = isAdultFemale && milkCapacity !== '' ? String(milkCapacity) : '';
     const finalCalfStatus = isAdultFemale ? finalCalfKidStatus : '';
 
     const payload = {
@@ -332,7 +332,7 @@ function App() {
       description,
       ageYears: Number(ageYears),
       ageMonths: Number(ageMonths),
-      teethCount: Number(teethCount),
+      teethCount: String(teethCount),
       milkCapacity: finalMilk,
       price: Number(price),
       status,
@@ -816,13 +816,11 @@ function App() {
                   <div className="form-group">
                     <label className="form-label">Teeth Count *</label>
                     <input 
-                      type="number" 
+                      type="text" 
                       className="form-input" 
                       value={teethCount} 
                       onChange={(e) => setTeethCount(e.target.value)} 
-                      placeholder="e.g. 2, 4, 6" 
-                      min="0"
-                      max="12"
+                      placeholder="e.g. 2, 4, Milk Teeth" 
                       required 
                     />
                   </div>
@@ -867,12 +865,11 @@ function App() {
                           <div className="form-group">
                             <label className="form-label">Daily Milk Capacity (Liters) <span style={{ color: 'var(--text-secondary)', fontSize: '0.75rem' }}>(Optional)</span></label>
                             <input 
-                              type="number" 
+                              type="text" 
                               className="form-input" 
                               value={milkCapacity} 
                               onChange={(e) => setMilkCapacity(e.target.value)} 
-                              placeholder="Optional" 
-                              min="0"
+                              placeholder="e.g. 10, 12-15 Liters (Optional)" 
                             />
                           </div>
                         )}

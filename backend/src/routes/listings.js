@@ -77,8 +77,8 @@ router.post('/', auth, async (req, res) => {
       description,
       ageYears: Number(ageYears),
       ageMonths: Number(ageMonths),
-      teethCount: Number(teethCount),
-      milkCapacity: isAdultFemale && milkCapacity !== null && milkCapacity !== undefined && milkCapacity !== '' ? Number(milkCapacity) : null,
+      teethCount: String(teethCount),
+      milkCapacity: isAdultFemale && milkCapacity !== null && milkCapacity !== undefined && milkCapacity !== '' ? String(milkCapacity) : '',
       price: Number(price),
       status: status || 'Available',
       calfKidStatus: isAdultFemale ? (calfKidStatus || '') : '',
@@ -107,7 +107,7 @@ router.put('/:id', auth, async (req, res) => {
     // Cast numeric fields if present in update payload
     if (updatePayload.ageYears !== undefined) updatePayload.ageYears = Number(updatePayload.ageYears);
     if (updatePayload.ageMonths !== undefined) updatePayload.ageMonths = Number(updatePayload.ageMonths);
-    if (updatePayload.teethCount !== undefined) updatePayload.teethCount = Number(updatePayload.teethCount);
+    if (updatePayload.teethCount !== undefined) updatePayload.teethCount = String(updatePayload.teethCount);
     if (updatePayload.price !== undefined) updatePayload.price = Number(updatePayload.price);
     
     // Clean up conditional fields if gender is Male or Category is Cow Calf/Goat Kid
@@ -116,12 +116,12 @@ router.put('/:id', auth, async (req, res) => {
     const isAdultFemale = (animalType === 'Cow' || animalType === 'Goat') && gender === 'Female';
 
     if (!isAdultFemale) {
-      updatePayload.milkCapacity = null;
+      updatePayload.milkCapacity = '';
       updatePayload.calfKidStatus = '';
     } else if (updatePayload.hasOwnProperty('milkCapacity')) {
       updatePayload.milkCapacity = updatePayload.milkCapacity !== null && updatePayload.milkCapacity !== undefined && updatePayload.milkCapacity !== '' 
-        ? Number(updatePayload.milkCapacity) 
-        : null;
+        ? String(updatePayload.milkCapacity) 
+        : '';
     }
 
     const updatedListing = await listingService.updateListing(req.params.id, updatePayload);
