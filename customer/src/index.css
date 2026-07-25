@@ -603,7 +603,7 @@ h1, h2, h3, h4, h5, h6 {
 .badge {
   position: absolute;
   top: 1rem;
-  right: 1rem;
+  left: 1rem;
   padding: 0.35rem 0.75rem;
   border-radius: 4px;
   font-weight: 800;

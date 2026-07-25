@@ -40,8 +40,8 @@ function App() {
   // Media sliders index state
   const [mediaIndexes, setMediaIndexes] = useState({});
   
-  // Video modal state
-  const [selectedVideo, setSelectedVideo] = useState(null);
+  // Lightbox modal state (photo/video full view)
+  const [selectedMedia, setSelectedMedia] = useState(null);
 
   // Expanded descriptions state hook
   const [expandedDescs, setExpandedDescs] = useState({});
@@ -339,13 +339,13 @@ function App() {
                     {/* Image / Video render */}
                     {currentMedia.type === 'video' ? (
                       <div 
-                        style={{ position: 'relative', width: '100%', height: '100%', cursor: 'pointer' }} 
+                        style={{ position: 'relative', width: '100%', height: '100%', cursor: 'zoom-in' }} 
                         onClick={(e) => {
                           if (isSwipeAction) {
                             setIsSwipeAction(false);
                             return;
                           }
-                          setSelectedVideo(currentMedia.url);
+                          setSelectedMedia(currentMedia);
                         }}
                       >
                         <video className="card-media" src={currentMedia.url} muted playsInline draggable="false" onDragStart={(e) => e.preventDefault()} />
@@ -354,7 +354,21 @@ function App() {
                         </div>
                       </div>
                     ) : (
-                      <img className="card-media" src={currentMedia.url} alt={`${item.breed}`} draggable="false" onDragStart={(e) => e.preventDefault()} />
+                      <img 
+                        className="card-media" 
+                        src={currentMedia.url} 
+                        alt={`${item.breed}`} 
+                        draggable="false" 
+                        onDragStart={(e) => e.preventDefault()} 
+                        style={{ cursor: 'zoom-in' }}
+                        onClick={(e) => {
+                          if (isSwipeAction) {
+                            setIsSwipeAction(false);
+                            return;
+                          }
+                          setSelectedMedia(currentMedia);
+                        }}
+                      />
                     )}
                   </div>
 
@@ -472,18 +486,22 @@ function App() {
 
 
 
-      {/* Video Player Modal */}
-      {selectedVideo && (
-        <div className="modal-overlay" onClick={() => setSelectedVideo(null)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <button className="modal-close" onClick={() => setSelectedVideo(null)}>
+      {/* Lightbox / Full View Modal */}
+      {selectedMedia && (
+        <div className="modal-overlay" onClick={() => setSelectedMedia(null)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '850px', background: 'transparent', border: 'none', boxShadow: 'none' }}>
+            <button className="modal-close" onClick={() => setSelectedMedia(null)} style={{ background: 'rgba(255, 255, 255, 0.9)', color: '#121a16' }}>
               <X size={20} />
             </button>
-            <video className="modal-video" src={selectedVideo} controls autoPlay />
-            <div className="modal-info">
-              <h3>Livestock Video Tour</h3>
+            {selectedMedia.type === 'video' ? (
+              <video className="modal-video" src={selectedMedia.url} controls autoPlay style={{ borderRadius: '12px', maxHeight: '80vh', objectFit: 'contain', background: '#000' }} />
+            ) : (
+              <img src={selectedMedia.url} alt="Full view" style={{ width: '100%', maxHeight: '80vh', objectFit: 'contain', borderRadius: '12px', background: 'rgba(0,0,0,0.1)' }} />
+            )}
+            <div className="modal-info" style={{ background: 'white', borderRadius: '12px', marginTop: '1rem', padding: '1.25rem' }}>
+              <h3>{selectedMedia.type === 'video' ? '📽️ Livestock Video Tour' : '📸 Full-Size Photo'}</h3>
               <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginTop: '0.25rem' }}>
-                Sekar Dairy Farm verified inspection video.
+                Sekar Dairy Farm verified high-quality media inspection.
               </p>
             </div>
           </div>
