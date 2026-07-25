@@ -42,8 +42,8 @@ app.get('/', (req, res) => {
 
 // Error handling middleware
 app.use((err, req, res, next) => {
-  console.error('Unhandled error:', err.stack);
-  res.status(500).json({ message: 'Internal Server Error', error: err.message });
+  console.error('Unhandled error:', err.stack || err);
+  res.status(500).json({ message: 'Internal Server Error', error: err.message || err });
 });
 
 // Port configuration
