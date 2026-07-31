@@ -4,7 +4,34 @@ import { LogIn, Plus, Trash2, Edit2, LogOut, CheckCircle, XCircle, Upload, X, Sa
 // API Endpoint URL
 const API_BASE = import.meta.env.VITE_API_URL || '';
 
+const translateCategory = (type, lang) => {
+  if (lang === 'ta') {
+    if (type === 'Cow') return 'பசு மாடு';
+    if (type === 'Goat') return 'ஆடு';
+    if (type === 'Cow Calf') return 'கன்றுக்குட்டி';
+    if (type === 'Goat Kid') return 'ஆட்டுக்குட்டி';
+  }
+  return type;
+};
+
+const translateGender = (gender, lang) => {
+  if (lang === 'ta') {
+    if (gender === 'Female') return 'பெண்';
+    if (gender === 'Male') return 'ஆண்';
+  }
+  return gender;
+};
+
+const translateStatus = (status, lang) => {
+  if (lang === 'ta') {
+    if (status.toLowerCase() === 'available') return 'விற்பனைக்கு உள்ளது';
+    if (status.toLowerCase() === 'sold') return 'விற்பனையானது';
+  }
+  return status;
+};
+
 function App() {
+  const [language, setLanguage] = useState(localStorage.getItem('sekar_vendor_lang') || 'en');
   // Auth state
   const [token, setToken] = useState(localStorage.getItem('sekar_token') || '');
   const [user, setUser] = useState(null);
@@ -447,64 +474,90 @@ function App() {
     return (
       <div className="login-wrapper">
         <div className="login-card">
-          <div className="login-header">
-            <div className="login-logo">🐄</div>
-            <h2>Sekar Dairy Farm</h2>
-            <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginTop: '0.25rem' }}>
-              Vendor Management Portal
-            </p>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '1rem' }}>
+          <button 
+            onClick={() => {
+              const nextLang = language === 'en' ? 'ta' : 'en';
+              setLanguage(nextLang);
+              localStorage.setItem('sekar_vendor_lang', nextLang);
+            }}
+            style={{
+              background: 'rgba(0, 0, 0, 0.05)',
+              border: '1px solid var(--border-color)',
+              color: 'var(--text-primary)',
+              padding: '0.4rem 0.8rem',
+              borderRadius: '20px',
+              cursor: 'pointer',
+              fontWeight: '600',
+              fontSize: '0.85rem',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.35rem',
+              fontFamily: 'inherit'
+            }}
+            type="button"
+          >
+            🌐 {language === 'en' ? 'தமிழ்' : 'English'}
+          </button>
+        </div>
+        <div className="login-header">
+          <div className="login-logo">🐄</div>
+          <h2>{language === 'en' ? 'Sekar Dairy Farm' : 'சேகர் டெய்ரி ஃபார்ம்'}</h2>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginTop: '0.25rem' }}>
+            {language === 'en' ? 'Vendor Management Portal' : 'விற்பனையாளர் நிர்வாக தளம்'}
+          </p>
+        </div>
+        
+        {authError && (
+          <div className="alert alert-error" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <AlertCircle size={18} />
+            <span>{authError}</span>
+          </div>
+        )}
+
+        <form onSubmit={handleLogin}>
+          <div className="form-group">
+            <label className="form-label">{language === 'en' ? 'Username' : 'பயனர் பெயர்'}</label>
+            <input 
+              type="text" 
+              className="form-input" 
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              placeholder={language === 'en' ? "Enter vendor username" : "பயனர் பெயரை உள்ளிடவும்"}
+              required
+              disabled={authLoading}
+            />
           </div>
           
-          {authError && (
-            <div className="alert alert-error" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <AlertCircle size={18} />
-              <span>{authError}</span>
-            </div>
-          )}
+          <div className="form-group">
+            <label className="form-label">{language === 'en' ? 'Password' : 'கடவுச்சொல்'}</label>
+            <input 
+              type="password" 
+              className="form-input" 
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder={language === 'en' ? "Enter password" : "கடவுச்சொல்லை உள்ளிடவும்"}
+              required
+              disabled={authLoading}
+            />
+          </div>
 
-          <form onSubmit={handleLogin}>
-            <div className="form-group">
-              <label className="form-label">Username</label>
-              <input 
-                type="text" 
-                className="form-input" 
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                placeholder="Enter vendor username"
-                required
-                disabled={authLoading}
-              />
-            </div>
-            
-            <div className="form-group">
-              <label className="form-label">Password</label>
-              <input 
-                type="password" 
-                className="form-input" 
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Enter password"
-                required
-                disabled={authLoading}
-              />
-            </div>
-
-            <button type="submit" className="btn-primary" style={{ width: '100%', marginTop: '1rem' }} disabled={authLoading}>
-              {authLoading ? (
-                <>
-                  <RefreshCw className="animate-spin" size={18} /> Signing In...
-                </>
-              ) : (
-                <>
-                  <LogIn size={18} /> Access Dashboard
-                </>
-              )}
-            </button>
-          </form>
-          
-          <p style={{ textAlign: 'center', marginTop: '2rem', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-            Authorized Sekar Dairy Farm staff only.
-          </p>
+          <button type="submit" className="btn-primary" style={{ width: '100%', marginTop: '1rem' }} disabled={authLoading}>
+            {authLoading ? (
+              <>
+                <RefreshCw className="animate-spin" size={18} /> {language === 'en' ? 'Signing In...' : 'உள்நுழைகிறது...'}
+              </>
+            ) : (
+              <>
+                <LogIn size={18} /> {language === 'en' ? 'Access Dashboard' : 'நிர்வாக பலகைக்குச் செல்'}
+              </>
+            )}
+          </button>
+        </form>
+        
+        <p style={{ textAlign: 'center', marginTop: '2rem', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+          {language === 'en' ? 'Authorized Sekar Dairy Farm staff only.' : 'சேகர் பண்ணை அங்கீகரிக்கப்பட்ட பணியாளர்கள் மட்டுமே.'}
+        </p>
         </div>
       </div>
     );
@@ -517,14 +570,39 @@ function App() {
       <header className="navbar">
         <div className="logo">
           <span className="logo-icon">🛡️</span>
-          <span>Sekar Farm Admin</span>
+          <span>{language === 'en' ? 'Sekar Farm Admin' : 'சேகர் பண்ணை நிர்வாகி'}</span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <button 
+            onClick={() => {
+              const nextLang = language === 'en' ? 'ta' : 'en';
+              setLanguage(nextLang);
+              localStorage.setItem('sekar_vendor_lang', nextLang);
+            }}
+            style={{
+              background: 'rgba(255, 255, 255, 0.08)',
+              border: '1px solid rgba(255, 255, 255, 0.15)',
+              color: 'white',
+              padding: '0.4rem 0.8rem',
+              borderRadius: '20px',
+              cursor: 'pointer',
+              fontWeight: '600',
+              fontSize: '0.85rem',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.35rem',
+              transition: 'all 0.2s',
+              fontFamily: 'inherit'
+            }}
+            type="button"
+          >
+            🌐 {language === 'en' ? 'தமிழ்' : 'English'}
+          </button>
           <span className="user-badge">
             👤 {user.username} ({user.role})
           </span>
-          <button onClick={handleLogout} className="btn-logout" title="Log Out">
-            <LogOut size={16} style={{ display: 'inline', marginRight: '0.25rem', verticalAlign: 'middle' }} /> Sign Out
+          <button onClick={handleLogout} className="btn-logout" title={language === 'en' ? 'Sign Out' : 'வெளியேறு'}>
+            <LogOut size={16} style={{ display: 'inline', marginRight: '0.25rem', verticalAlign: 'middle' }} /> {language === 'en' ? 'Sign Out' : 'வெளியேறு'}
           </button>
         </div>
       </header>
@@ -541,13 +619,13 @@ function App() {
         {/* Dashboard Header */}
         <section className="dashboard-header">
           <div>
-            <h1>Livestock Listings Manager</h1>
+            <h1>{language === 'en' ? 'Livestock Listings Manager' : 'கால்நடை பட்டியல்கள் மேலாளர்'}</h1>
             <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>
-              Add and update cows and goats listing details on the customer website.
+              {language === 'en' ? 'Add and update cows and goats listing details on the customer website.' : 'விற்பனைக்கான மாடுகள் மற்றும் ஆடுகளின் விவரங்களை வாடிக்கையாளர் பக்கத்தில் சேர்க்கவும் மற்றும் புதுப்பிக்கவும்.'}
             </p>
           </div>
           <button onClick={() => openModal()} className="btn-primary" style={{ borderRadius: '8px' }}>
-            <Plus size={18} /> Add New Listing
+            <Plus size={18} /> {language === 'en' ? 'Add New Listing' : 'புதிய கால்நடை சேர்'}
           </button>
         </section>
 
@@ -555,7 +633,7 @@ function App() {
         <section style={{ background: 'var(--card-bg)', backdropFilter: 'blur(16px)', border: '1px solid var(--border-color)', borderRadius: 'var(--border-radius-md)', padding: '2rem', marginBottom: '2rem', boxShadow: 'var(--shadow-md)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
             <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', fontSize: '1.5rem', fontWeight: '800', color: 'var(--primary-color)' }}>
-              <span className="logo-icon">🪪</span> Vendor Contact Info
+              <span className="logo-icon">🪪</span> {language === 'en' ? 'Vendor Contact Info' : 'விற்பனையாளர் தொடர்பு விவரங்கள்'}
             </h3>
             <button 
               type="button" 
@@ -571,14 +649,14 @@ function App() {
               ) : (
                 <Edit2 size={14} />
               )}
-              {savingSettings ? 'Saving...' : isEditingSettings ? 'Save Info' : 'Edit Info'}
+              {savingSettings ? (language === 'en' ? 'Saving...' : 'சேமிக்கிறது...') : isEditingSettings ? (language === 'en' ? 'Save Info' : 'விவரங்களைச் சேமி') : (language === 'en' ? 'Edit Info' : 'விவரங்களை திருத்து')}
             </button>
           </div>
 
           <form onSubmit={handleSaveSettings}>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginBottom: '1.5rem' }}>
               <div className="form-group">
-                <label className="form-label" style={{ fontWeight: '800', letterSpacing: '0.5px' }}>PHONE NUMBER</label>
+                <label className="form-label" style={{ fontWeight: '800', letterSpacing: '0.5px' }}>{language === 'en' ? 'PHONE NUMBER' : 'தொலைபேசி எண்'}</label>
                 <input 
                   type="text" 
                   className="form-input" 
@@ -591,7 +669,7 @@ function App() {
                 />
               </div>
               <div className="form-group">
-                <label className="form-label" style={{ fontWeight: '800', letterSpacing: '0.5px' }}>GOOGLE MAPS LINK</label>
+                <label className="form-label" style={{ fontWeight: '800', letterSpacing: '0.5px' }}>{language === 'en' ? 'GOOGLE MAPS LINK' : 'கூகுள் மேப் முகவரி'}</label>
                 <input 
                   type="text" 
                   className="form-input" 
@@ -606,7 +684,7 @@ function App() {
             </div>
 
             <div className="form-group">
-              <label className="form-label" style={{ fontWeight: '800', letterSpacing: '0.5px' }}>AUTOMATICALLY GENERATED WHATSAPP LINK</label>
+              <label className="form-label" style={{ fontWeight: '800', letterSpacing: '0.5px' }}>{language === 'en' ? 'AUTOMATICALLY GENERATED WHATSAPP LINK' : 'தானாக உருவான வாட்ஸ்அப் இணைப்பு'}</label>
               <div style={{ display: 'flex', alignItems: 'center', background: 'rgba(0,0,0,0.02)', border: '1px solid var(--border-color)', borderRadius: 'var(--border-radius-sm)', padding: '0.5rem 0.75rem' }}>
                 <input 
                   type="text" 
@@ -619,14 +697,14 @@ function App() {
                   onClick={() => {
                     const cleanNumber = phoneSetting.replace(/[^0-9]/g, '');
                     if (cleanNumber) {
-                      window.open(`https://wa.me/${cleanNumber}`, '_blank');
+                       window.open(`https://wa.me/${cleanNumber}`, '_blank');
                     }
                   }} 
                   className="btn" 
                   style={{ background: '#0d5c3a', color: 'white', padding: '0.5rem 1.25rem', borderRadius: '6px', cursor: 'pointer', border: 'none', fontWeight: '700', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.35rem', transition: 'background-color 0.2s' }}
                   disabled={!phoneSetting.replace(/[^0-9]/g, '')}
                 >
-                  <MessageSquare size={14} /> Test Link
+                  <MessageSquare size={14} /> {language === 'en' ? 'Test Link' : 'இணைப்பைச் சோதிக்க'}
                 </button>
               </div>
             </div>
@@ -653,17 +731,17 @@ function App() {
             <table className="dashboard-table">
               <thead>
                 <tr>
-                  <th>Media</th>
-                  <th>Animal Name</th>
-                  <th>Category</th>
-                  <th>Gender</th>
-                  <th>Breed</th>
-                  <th>Age</th>
-                  <th>Daily Milk</th>
-                  <th>Calf/Kid Status</th>
-                  <th>Price</th>
-                  <th>Status</th>
-                  <th>Actions</th>
+                  <th>{language === 'en' ? 'Media' : 'புகைப்படம்/வீடியோ'}</th>
+                  <th>{language === 'en' ? 'Animal Name' : 'பெயர்'}</th>
+                  <th>{language === 'en' ? 'Category' : 'பிரிவு'}</th>
+                  <th>{language === 'en' ? 'Gender' : 'பாலினம்'}</th>
+                  <th>{language === 'en' ? 'Breed' : 'இனம்'}</th>
+                  <th>{language === 'en' ? 'Age' : 'வயது'}</th>
+                  <th>{language === 'en' ? 'Daily Milk' : 'தினசரி பால்'}</th>
+                  <th>{language === 'en' ? 'Calf/Kid Status' : 'கன்று/ஆட்டுக்குட்டி நிலை'}</th>
+                  <th>{language === 'en' ? 'Price' : 'விலை'}</th>
+                  <th>{language === 'en' ? 'Status' : 'இருப்பு நிலை'}</th>
+                  <th>{language === 'en' ? 'Actions' : 'செயல்கள்'}</th>
                 </tr>
               </thead>
               <tbody>
@@ -691,18 +769,18 @@ function App() {
                         <strong>{item.animalName}</strong>
                       </td>
                       <td>
-                        <strong style={{ textTransform: 'capitalize' }}>{item.animalType}</strong>
+                        <strong style={{ textTransform: 'capitalize' }}>{translateCategory(item.animalType, language)}</strong>
                       </td>
                       <td>
                         <span className={`gender-badge ${item.gender.toLowerCase()}`} style={{ fontSize: '0.8rem', fontWeight: 'bold', padding: '0.2rem 0.5rem', borderRadius: '4px', background: item.gender === 'Male' ? '#e1f5fe' : '#fce4ec', color: item.gender === 'Male' ? '#0288d1' : '#c2185b' }}>
-                          {item.gender}
+                          {translateGender(item.gender, language)}
                         </span>
                       </td>
                       <td>{item.breed}</td>
                       <td>{item.age}</td>
                       <td>
                         {item.milkCapacity !== null && item.milkCapacity !== undefined && item.milkCapacity !== '' 
-                          ? `${item.milkCapacity} Liters` 
+                          ? `${item.milkCapacity} ${language === 'en' ? 'Liters' : 'லிட்டர்'}` 
                           : '—'}
                       </td>
                       <td>{item.calfKidStatus || '—'}</td>
@@ -711,10 +789,10 @@ function App() {
                         <span 
                           onClick={() => handleToggleStatus(item)}
                           className={`status-badge ${item.status.toLowerCase()}`}
-                          title="Click to toggle status"
+                          style={{ cursor: 'pointer' }}
+                          title={language === 'en' ? "Click to toggle status" : "மாற்ற கிளிக் செய்யவும்"}
                         >
-                          {item.status === 'Available' ? <CheckCircle size={12} /> : <XCircle size={12} />}
-                          {item.status}
+                          {translateStatus(item.status, language)}
                         </span>
                       </td>
                       <td>
@@ -741,7 +819,9 @@ function App() {
         <div className="modal-backdrop">
           <div className="modal-container">
             <div className="modal-header">
-              <h2>{editingListing ? '✏️ Edit Livestock Listing' : '🐄 Add New Livestock'}</h2>
+              <h2 className="modal-title">
+                {editingListing ? (language === 'en' ? 'Edit Livestock Listing' : 'கால்நடை விவரங்களை திருத்து') : (language === 'en' ? 'Add New Livestock' : 'புதிய கால்நடை சேர்')}
+              </h2>
               <button onClick={() => setIsModalOpen(false)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)' }}>
                 <X size={24} />
               </button>
@@ -752,34 +832,34 @@ function App() {
                 {/* Form fields */}
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
                   <div className="form-group">
-                    <label className="form-label">Animal Name *</label>
+                    <label className="form-label">{language === 'en' ? 'Animal Name *' : 'கால்நடை பெயர் *'}</label>
                     <input 
                       type="text" 
                       className="form-input" 
                       value={animalName} 
                       onChange={(e) => setAnimalName(e.target.value)} 
-                      placeholder="e.g. Ganga, Lakshmi, Whitey" 
+                      placeholder={language === 'en' ? "e.g. Lakshmi, Ponni" : "எ.கா: லட்சுமி, பொன்னி"} 
                       required 
                     />
                   </div>
                   <div className="form-group">
-                    <label className="form-label">Category *</label>
+                    <label className="form-label">{language === 'en' ? 'Category *' : 'பிரிவு *'}</label>
                     <select className="form-select" value={animalType} onChange={(e) => {
                       setAnimalType(e.target.value);
                       setCalfKidStatus('');
                       setCustomCalfKidStatus('');
                     }}>
-                      <option value="Cow">Cow</option>
-                      <option value="Goat">Goat</option>
-                      <option value="Cow Calf">Cow Calf</option>
-                      <option value="Goat Kid">Goat Kid</option>
+                      <option value="Cow">{language === 'en' ? 'Cow' : 'பசு மாடு'}</option>
+                      <option value="Goat">{language === 'en' ? 'Goat' : 'ஆடு'}</option>
+                      <option value="Cow Calf">{language === 'en' ? 'Cow Calf' : 'கன்றுக்குட்டி'}</option>
+                      <option value="Goat Kid">{language === 'en' ? 'Goat Kid' : 'ஆட்டுக்குட்டி'}</option>
                     </select>
                   </div>
                 </div>
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
                   <div className="form-group">
-                    <label className="form-label">Gender *</label>
+                    <label className="form-label">{language === 'en' ? 'Gender *' : 'பாலினம் *'}</label>
                     <select className="form-select" value={gender} onChange={(e) => {
                       setGender(e.target.value);
                       if (e.target.value === 'Male') {
@@ -788,18 +868,18 @@ function App() {
                         setCustomCalfKidStatus('');
                       }
                     }}>
-                      <option value="Female">Female</option>
-                      <option value="Male">Male</option>
+                      <option value="Female">{language === 'en' ? 'Female' : 'பெண்'}</option>
+                      <option value="Male">{language === 'en' ? 'Male' : 'ஆண்'}</option>
                     </select>
                   </div>
                   <div className="form-group">
-                    <label className="form-label">Breed Name *</label>
+                    <label className="form-label">{language === 'en' ? 'Breed Name *' : 'இனத்தின் பெயர் *'}</label>
                     <input 
                       type="text" 
                       className="form-input" 
                       value={breed} 
                       onChange={(e) => setBreed(e.target.value)} 
-                      placeholder="e.g. Jersey, Gir, Boer" 
+                      placeholder={language === 'en' ? "e.g. Jersey, Gir, Boer" : "எ.கா: ஜெர்சி, கிர், போயர்"} 
                       required 
                     />
                   </div>
@@ -807,25 +887,25 @@ function App() {
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
                   <div className="form-group">
-                    <label className="form-label">Teeth Count *</label>
+                    <label className="form-label">{language === 'en' ? 'Teeth Count *' : 'பற்களின் எண்ணிக்கை *'}</label>
                     <input 
                       type="text" 
                       className="form-input" 
                       value={teethCount} 
                       onChange={(e) => setTeethCount(e.target.value)} 
-                      placeholder="e.g. 2, 4, Milk Teeth" 
+                      placeholder={language === 'en' ? "e.g. 2, 4, Milk Teeth" : "எ.கா: 2, 4, பால் பற்கள்"} 
                       required 
                     />
                   </div>
                   
                   <div className="form-group">
-                    <label className="form-label">Age *</label>
+                    <label className="form-label">{language === 'en' ? 'Age *' : 'வயது *'}</label>
                     <input 
                       type="text" 
                       className="form-input" 
                       value={age} 
                       onChange={(e) => setAge(e.target.value)} 
-                      placeholder="e.g. 2 Years 6 Months, or 2.5 Years" 
+                      placeholder={language === 'en' ? "e.g. 2 Years 6 Months, or 2.5 Years" : "எ.கா: 2 வயது 6 மாதம், அல்லது 2.5 ஆண்டுகள்"} 
                       required 
                     />
                   </div>
@@ -839,18 +919,21 @@ function App() {
                       <div style={{ display: 'grid', gridTemplateColumns: isAdultFemale ? '1fr 1fr' : '1fr', gap: '1rem', marginBottom: '1rem' }}>
                         {isAdultFemale && (
                           <div className="form-group">
-                            <label className="form-label">Daily Milk Capacity (Liters) <span style={{ color: 'var(--text-secondary)', fontSize: '0.75rem' }}>(Optional)</span></label>
+                            <label className="form-label">
+                              {language === 'en' ? 'Daily Milk Capacity (Liters) ' : 'தினசரி பால் அளவு (லிட்டர்) '}
+                              <span style={{ color: 'var(--text-secondary)', fontSize: '0.75rem' }}>({language === 'en' ? 'Optional' : 'விரும்பினால்'})</span>
+                            </label>
                             <input 
                               type="text" 
                               className="form-input" 
                               value={milkCapacity} 
                               onChange={(e) => setMilkCapacity(e.target.value)} 
-                              placeholder="e.g. 10, 12-15 Liters (Optional)" 
+                              placeholder={language === 'en' ? "e.g. 10, 12-15 Liters (Optional)" : "எ.கா: 10, 12-15 லிட்டர் (விரும்பினால்)"} 
                             />
                           </div>
                         )}
                         <div className="form-group">
-                           <label className="form-label">Price (INR ₹) *</label>
+                           <label className="form-label">{language === 'en' ? 'Price (INR ₹) *' : 'விலை (ரூபாய் ₹) *'}</label>
                            <input 
                              type="number" 
                              className="form-input" 
@@ -865,16 +948,18 @@ function App() {
 
                       <div style={{ display: 'grid', gridTemplateColumns: isAdultFemale ? '1fr 1fr' : '1fr', gap: '1rem', marginBottom: '1rem' }}>
                         <div className="form-group">
-                          <label className="form-label">Availability Status *</label>
+                          <label className="form-label">{language === 'en' ? 'Availability Status *' : 'இருப்பு நிலை *'}</label>
                           <select className="form-select" value={status} onChange={(e) => setStatus(e.target.value)}>
-                            <option value="Available">Available</option>
-                            <option value="Sold">Sold</option>
+                            <option value="Available">{language === 'en' ? 'Available' : 'விற்பனைக்கு உள்ளது'}</option>
+                            <option value="Sold">{language === 'en' ? 'Sold' : 'விற்பனையானது'}</option>
                           </select>
                         </div>
                         {isAdultFemale && (
                           <div className="form-group">
                             <label className="form-label">
-                              {animalType === 'Cow' ? 'Calf Status (Optional)' : 'Kid Status (Optional)'}
+                              {(animalType === 'Cow' || animalType === 'Cow Calf') 
+                                ? (language === 'en' ? 'Calf Status (Optional)' : 'கன்றுக்குட்டி நிலை (விரும்பினால்)') 
+                                : (language === 'en' ? 'Kid Status (Optional)' : 'ஆட்டுக்குட்டி நிலை (விரும்பினால்)')}
                             </label>
                             <select 
                               className="form-select" 
@@ -886,23 +971,23 @@ function App() {
                                 }
                               }}
                             >
-                              <option value="">-- Select Status --</option>
-                              {animalType === 'Cow' ? (
+                              <option value="">{language === 'en' ? '-- Select Status --' : '-- நிலையைத் தேர்ந்தெடுக்கவும் --'}</option>
+                              {(animalType === 'Cow' || animalType === 'Cow Calf') ? (
                                 <>
-                                  <option value="No Calf">No Calf</option>
-                                  <option value="Male Calf">Male Calf</option>
-                                  <option value="Female Calf">Female Calf</option>
-                                  <option value="One Male, One Female">One Male, One Female</option>
+                                  <option value="No Calf">{language === 'en' ? 'No Calf' : 'கன்றுக்குட்டி இல்லை'}</option>
+                                  <option value="Male Calf">{language === 'en' ? 'Male Calf' : 'ஆண் கன்றுக்குட்டி'}</option>
+                                  <option value="Female Calf">{language === 'en' ? 'Female Calf' : 'பெண் கன்றுக்குட்டி'}</option>
+                                  <option value="One Male, One Female">{language === 'en' ? 'One Male, One Female' : 'ஒரு ஆண், ஒரு பெண்'}</option>
                                 </>
                               ) : (
                                 <>
-                                  <option value="No Kid">No Kid</option>
-                                  <option value="Male Kid">Male Kid</option>
-                                  <option value="Female Kid">Female Kid</option>
-                                  <option value="One Male, One Female">One Male, One Female</option>
+                                  <option value="No Kid">{language === 'en' ? 'No Kid' : 'ஆட்டுக்குட்டி இல்லை'}</option>
+                                  <option value="Male Kid">{language === 'en' ? 'Male Kid' : 'ஆண் ஆட்டுக்குட்டி'}</option>
+                                  <option value="Female Kid">{language === 'en' ? 'Female Kid' : 'பெண் ஆட்டுக்குட்டி'}</option>
+                                  <option value="One Male, One Female">{language === 'en' ? 'One Male, One Female' : 'ஒரு ஆண், ஒரு பெண்'}</option>
                                 </>
                               )}
-                              <option value="Custom...">Custom Option</option>
+                              <option value="Custom...">{language === 'en' ? 'Custom Option' : 'விருப்ப நிலை (Custom)'}</option>
                             </select>
                           </div>
                         )}
@@ -910,13 +995,17 @@ function App() {
 
                       {isAdultFemale && calfKidStatus === 'Custom...' && (
                         <div className="form-group" style={{ marginBottom: '1rem' }}>
-                          <label className="form-label">Enter Custom {animalType === 'Cow' ? 'Calf' : 'Kid'} Status *</label>
+                          <label className="form-label">
+                            {(animalType === 'Cow' || animalType === 'Cow Calf') 
+                              ? (language === 'en' ? 'Enter Custom Calf Status *' : 'விருப்ப கன்றுக்குட்டி நிலையை உள்ளிடவும் *') 
+                              : (language === 'en' ? 'Enter Custom Kid Status *' : 'விருப்ப ஆட்டுக்குட்டி நிலையை உள்ளிடவும் *')}
+                          </label>
                           <input 
                             type="text" 
                             className="form-input" 
                             value={customCalfKidStatus} 
                             onChange={(e) => setCustomCalfKidStatus(e.target.value)} 
-                            placeholder="e.g. Twins Male, Pregnant again"
+                            placeholder={language === 'en' ? "e.g. Twins Male, Pregnant again" : "எ.கா: இரட்டை ஆண் கன்றுகள்"}
                             required 
                           />
                         </div>
@@ -926,19 +1015,19 @@ function App() {
                 })()}
 
                 <div className="form-group" style={{ marginBottom: '1.5rem' }}>
-                  <label className="form-label">Unique Description & Details *</label>
+                  <label className="form-label">{language === 'en' ? 'Unique Description & Details *' : 'குறிப்புகள் & விவரங்கள் *'}</label>
                   <textarea 
                     className="form-textarea" 
                     value={description} 
                     onChange={(e) => setDescription(e.target.value)} 
-                    placeholder="Describe details like health status, vaccination status, delivery counts, behavior traits..." 
+                    placeholder={language === 'en' ? "Describe details like health status, vaccination status, delivery counts, behavior traits..." : "சுகாதார நிலை, தடுப்பூசி விவரங்கள், ஈற்று எண்ணிக்கை போன்றவற்றை விவரிக்கவும்..."} 
                     required
                   />
                 </div>
 
                 {/* Media uploads */}
                 <div className="form-group" style={{ marginTop: '1.5rem' }}>
-                  <label className="form-label">Photos & Videos (Responsive Uploads) *</label>
+                  <label className="form-label">{language === 'en' ? 'Photos & Videos (Responsive Uploads) *' : 'புகைப்படங்கள் & வீடியோக்கள் *'}</label>
                   
                   {uploadError && (
                     <div className="alert alert-error" style={{ padding: '0.5rem', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
@@ -948,9 +1037,13 @@ function App() {
                   )}
 
                   <div className="upload-zone" onClick={() => fileInputRef.current.click()}>
-                    <Upload size={28} style={{ color: 'var(--text-secondary)' }} />
-                    <p style={{ fontWeight: 600, fontSize: '0.9rem' }}>Click to select media file</p>
-                    <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Supports Images (JPG, PNG, WEBP) & Videos (MP4) up to 50MB</p>
+                    <div className="upload-icon">
+                      {uploading ? <RefreshCw className="animate-spin" size={32} /> : <Upload size={32} />}
+                    </div>
+                    <h3>{language === 'en' ? 'Click to select media file' : 'புகைப்படம் அல்லது வீடியோவை தேர்ந்தெடுக்கவும்'}</h3>
+                    <p style={{ fontSize: '0.8rem', opacity: 0.7 }}>
+                      {language === 'en' ? 'Supports Images (JPG, PNG, WEBP) & Videos (MP4) up to 50MB' : 'புகைப்படங்கள் மற்றும் வீடியோக்கள் (அதிகபட்சம் 50MB) ஆதரிக்கப்படும்'}
+                    </p>
                     <input 
                       type="file" 
                       ref={fileInputRef} 
@@ -995,10 +1088,10 @@ function App() {
               
               <div className="modal-footer">
                 <button type="button" className="btn-secondary" onClick={() => setIsModalOpen(false)}>
-                  Cancel
+                  {language === 'en' ? 'Cancel' : 'ரத்து செய்'}
                 </button>
                 <button type="submit" className="btn-primary" disabled={uploading}>
-                  <Save size={18} /> {editingListing ? 'Update Listing' : 'Publish Listing'}
+                  <Save size={18} /> {editingListing ? (language === 'en' ? 'Update Listing' : 'சேமிக்கவும்') : (language === 'en' ? 'Publish Listing' : 'வெளியிடவும்')}
                 </button>
               </div>
             </form>

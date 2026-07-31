@@ -19,7 +19,34 @@ const BRAND_QUOTES = [
   "High-yielding milk genetics, pure breed verification, and trusted service across generations."
 ];
 
+const translateCategory = (type, lang) => {
+  if (lang === 'ta') {
+    if (type === 'Cow') return 'மாடு';
+    if (type === 'Goat') return 'ஆடு';
+    if (type === 'Cow Calf') return 'கன்றுக்குட்டி';
+    if (type === 'Goat Kid') return 'ஆட்டுக்குட்டி';
+  }
+  return type;
+};
+
+const translateGender = (gender, lang) => {
+  if (lang === 'ta') {
+    if (gender === 'Female') return 'பெண்';
+    if (gender === 'Male') return 'ஆண்';
+  }
+  return gender;
+};
+
+const translateStatus = (status, lang) => {
+  if (lang === 'ta') {
+    if (status.toLowerCase() === 'available') return 'விற்பனைக்கு உள்ளது';
+    if (status.toLowerCase() === 'sold') return 'விற்பனையானது';
+  }
+  return status;
+};
+
 function App() {
+  const [language, setLanguage] = useState(localStorage.getItem('sekar_lang') || 'en');
   const [listings, setListings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -184,13 +211,38 @@ function App() {
           </div>
           <div className="logo-text-wrapper">
             <span className="logo-brand">S E K A R</span>
-            <span className="logo-subbrand">DAIRY FARM</span>
+            <span className="logo-subbrand">{language === 'en' ? 'DAIRY FARM' : 'டெய்ரி ஃபார்ம்'}</span>
           </div>
         </div>
-        <div className="nav-links">
-          <a href="#" className="nav-link active">Livestock Listings</a>
+        <div className="nav-links" style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <button 
+            onClick={() => {
+              const nextLang = language === 'en' ? 'ta' : 'en';
+              setLanguage(nextLang);
+              localStorage.setItem('sekar_lang', nextLang);
+            }}
+            style={{
+              background: 'rgba(255, 255, 255, 0.08)',
+              border: '1px solid rgba(255, 255, 255, 0.15)',
+              color: 'white',
+              padding: '0.4rem 0.8rem',
+              borderRadius: '20px',
+              cursor: 'pointer',
+              fontWeight: '600',
+              fontSize: '0.85rem',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.35rem',
+              transition: 'all 0.2s',
+              fontFamily: 'inherit'
+            }}
+            className="lang-toggle-btn"
+          >
+            🌐 {language === 'en' ? 'தமிழ்' : 'English'}
+          </button>
+          <a href="#" className="nav-link active">{language === 'en' ? 'Livestock Listings' : 'கால்நடை பட்டியல்கள்'}</a>
           <a href={vendorInfo.mapsUrl} target="_blank" rel="noopener noreferrer" className="nav-link visit-btn">
-            Visit Farm ↗
+            {language === 'en' ? 'Visit Farm' : 'பண்ணையை பார்வையிட'} ↗
           </a>
         </div>
       </header>
@@ -198,8 +250,10 @@ function App() {
       {/* Unique Centered Hero Section */}
       <section className="hero-asymmetric" style={{ display: 'block', margin: '3rem auto', textAlign: 'center' }}>
         <div className="hero-text-block" style={{ alignItems: 'center', maxWidth: '800px', margin: '0 auto' }}>
-          <span className="hero-tagline">ESTABLISHED 2012 • VERIFIED BREEDING</span>
-          <h1 className="hero-title" style={{ fontSize: '3rem', marginBottom: '1rem', lineHeight: 1.25 }}>Refined Heritage & Elite Livestock.</h1>
+          <span className="hero-tagline">{language === 'en' ? 'ESTABLISHED 2012 • VERIFIED BREEDING' : 'தொடக்கம் 2012 • சரிபார்க்கப்பட்ட இனப்பெருக்கம்'}</span>
+          <h1 className="hero-title" style={{ fontSize: '3rem', marginBottom: '1rem', lineHeight: 1.25 }}>
+            {language === 'en' ? 'Refined Heritage & Elite Livestock.' : 'பாரம்பரிய பெருமை & உயர்ரக கால்நடைகள்.'}
+          </h1>
         </div>
       </section>
 
@@ -211,7 +265,7 @@ function App() {
               <Search size={18} className="control-icon" />
               <input 
                 type="text" 
-                placeholder="Search breeds or listings..." 
+                placeholder={language === 'en' ? "Search breeds or listings..." : "மாட்டின் இனம் அல்லது பெயர் கொண்டு தேடவும்..."} 
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />
@@ -220,38 +274,38 @@ function App() {
             <div className="control-field divider"></div>
             
             <div className="control-field select-field">
-              <span className="field-label">Category</span>
+              <span className="field-label">{language === 'en' ? 'Category' : 'பிரிவு'}</span>
               <select value={animalType} onChange={(e) => setAnimalType(e.target.value)}>
-                <option value="All">All Categories</option>
-                <option value="Cow">Cow</option>
-                <option value="Goat">Goat</option>
-                <option value="Cow Calf">Cow Calf</option>
-                <option value="Goat Kid">Goat Kid</option>
+                <option value="All">{language === 'en' ? 'All Categories' : 'அனைத்துப் பிரிவுகள்'}</option>
+                <option value="Cow">{language === 'en' ? 'Cow' : 'பசு மாடு'}</option>
+                <option value="Goat">{language === 'en' ? 'Goat' : 'ஆடு'}</option>
+                <option value="Cow Calf">{language === 'en' ? 'Cow Calf' : 'கன்றுக்குட்டி'}</option>
+                <option value="Goat Kid">{language === 'en' ? 'Goat Kid' : 'ஆட்டுக்குட்டி'}</option>
               </select>
             </div>
             
             <div className="control-field divider"></div>
             
             <div className="control-field select-field">
-              <span className="field-label">Availability</span>
+              <span className="field-label">{language === 'en' ? 'Availability' : 'இருப்பு நிலை'}</span>
               <select value={status} onChange={(e) => setStatus(e.target.value)}>
-                <option value="Available">Available Only</option>
-                <option value="Sold">Sold listings</option>
-                <option value="All">Show All</option>
+                <option value="Available">{language === 'en' ? 'Available Only' : 'விற்பனைக்கு உள்ளவை'}</option>
+                <option value="Sold">{language === 'en' ? 'Sold listings' : 'விற்பனையானவை'}</option>
+                <option value="All">{language === 'en' ? 'Show All' : 'அனைத்தையும் காட்டு'}</option>
               </select>
             </div>
             
             <div className="control-field divider"></div>
             
             <div className="control-field select-field price-field">
-              <span className="field-label">Max Price</span>
+              <span className="field-label">{language === 'en' ? 'Max Price' : 'அதிகபட்ச விலை'}</span>
               <select value={maxPrice} onChange={(e) => setMaxPrice(e.target.value)}>
-                <option value="">Any Price</option>
-                <option value="25000">Under ₹25,000</option>
-                <option value="50000">Under ₹50,000</option>
-                <option value="75000">Under ₹75,000</option>
-                <option value="100000">Under ₹1,00,000</option>
-                <option value="150000">Under ₹1,50,000</option>
+                <option value="">{language === 'en' ? 'Any Price' : 'எந்த விலையும்'}</option>
+                <option value="25000">{language === 'en' ? 'Under ₹25,000' : '₹25,000க்கு கீழ்'}</option>
+                <option value="50000">{language === 'en' ? 'Under ₹50,000' : '₹50,000க்கு கீழ்'}</option>
+                <option value="75000">{language === 'en' ? 'Under ₹75,000' : '₹75,000க்கு கீழ்'}</option>
+                <option value="100000">{language === 'en' ? 'Under ₹1,00,000' : '₹1,00,000க்கு கீழ்'}</option>
+                <option value="150000">{language === 'en' ? 'Under ₹1,50,000' : '₹1,50,000க்கு கீழ்'}</option>
               </select>
             </div>
 
@@ -271,22 +325,22 @@ function App() {
         {loading ? (
           <div style={{ textAlign: 'center', padding: '4rem 0' }}>
             <RefreshCw className="animate-spin" size={40} style={{ color: 'var(--primary-color)' }} />
-            <p style={{ marginTop: '1rem', fontWeight: 600 }}>Loading premium listings...</p>
+            <p style={{ marginTop: '1rem', fontWeight: 600 }}>{language === 'en' ? 'Loading premium listings...' : 'தரமான கால்நடைகளை ஏற்றுகிறது...'}</p>
           </div>
         ) : error ? (
           <div className="empty-state">
             <div className="empty-icon">⚠️</div>
-            <h3>Could Not Connect to Database</h3>
+            <h3>{language === 'en' ? 'Could Not Connect to Database' : 'தரவுத்தளத்துடன் இணைக்க முடியவில்லை'}</h3>
             <p>{error}</p>
             <button onClick={fetchListings} className="btn btn-call" style={{ margin: '1rem auto 0 auto', width: 'auto' }}>
-              Try Again
+              {language === 'en' ? 'Try Again' : 'மீண்டும் முயற்சி செய்'}
             </button>
           </div>
         ) : filteredListings.length === 0 ? (
           <div className="empty-state">
             <div className="empty-icon">🐄</div>
-            <h3>No Listings Found</h3>
-            <p>We couldn't find any livestock matching your current filter criteria.</p>
+            <h3>{language === 'en' ? 'No Listings Found' : 'கால்நடைகள் எதுவும் இல்லை'}</h3>
+            <p>{language === 'en' ? "We couldn't find any livestock matching your current filter criteria." : "உங்களது தேடலுக்குப் பொருத்தமான கால்நடைகள் எதுவும் கண்டறியப்படவில்லை."}</p>
           </div>
         ) : (
           <div className="listings-grid">
@@ -317,7 +371,7 @@ function App() {
                   >
                     {/* Badge availability */}
                     <span className={`badge ${item.status.toLowerCase()}`}>
-                      {item.status}
+                      {translateStatus(item.status, language)}
                     </span>
 
                     {/* Indicator Dots only, arrow buttons removed */}
@@ -380,7 +434,7 @@ function App() {
                           {item.animalName}
                         </h3>
                         <span style={{ fontSize: '0.75rem', fontWeight: '700', color: 'var(--primary-color)', background: 'var(--primary-glow)', padding: '0.15rem 0.5rem', borderRadius: '4px', display: 'inline-block', marginTop: '0.25rem', border: '1px solid var(--border-color)', textTransform: 'capitalize' }}>
-                          {item.breed} ({item.animalType} • {item.gender})
+                          {item.breed} ({translateCategory(item.animalType, language)} • {translateGender(item.gender, language)})
                         </span>
                       </div>
                       <div className="card-price">{formatPrice(item.price)}</div>
@@ -389,17 +443,17 @@ function App() {
                     {/* Animal Specifications */}
                     <div className="specs-grid">
                       <div className="spec-item">
-                        <span className="spec-label">Age</span>
+                        <span className="spec-label">{language === 'en' ? 'Age' : 'வயது'}</span>
                         <span className="spec-value">{item.age}</span>
                       </div>
                       <div className="spec-item">
-                        <span className="spec-label">Teeth</span>
+                        <span className="spec-label">{language === 'en' ? 'Teeth' : 'பற்கள்'}</span>
                         <span className="spec-value">{item.teethCount}</span>
                       </div>
                       {item.milkCapacity !== null && item.milkCapacity !== undefined && item.milkCapacity !== '' && (
                         <div className="spec-item">
-                          <span className="spec-label">Daily Milk</span>
-                          <span className="spec-value">{item.milkCapacity}L</span>
+                          <span className="spec-label">{language === 'en' ? 'Daily Milk' : 'தினசரி பால்'}</span>
+                          <span className="spec-value">{item.milkCapacity} {language === 'en' ? 'L' : 'லிட்டர்'}</span>
                         </div>
                       )}
                     </div>
@@ -433,7 +487,7 @@ function App() {
                                 fontFamily: 'inherit'
                               }}
                             >
-                              {isExpanded ? 'Read Less' : 'Read More'}
+                              {isExpanded ? (language === 'en' ? 'Read Less' : 'சுருக்கவும்') : (language === 'en' ? 'Read More' : 'மேலும் படிக்க')}
                             </button>
                           </span>
                         );
@@ -443,23 +497,28 @@ function App() {
                     {item.calfKidStatus && (
                       <div style={{ fontSize: '0.85rem', fontWeight: '600', color: 'var(--primary-color)', display: 'flex', alignItems: 'center', gap: '0.35rem', background: 'var(--primary-glow)', padding: '0.4rem 0.75rem', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
                         <span>{(item.animalType === 'Cow' || item.animalType === 'Cow Calf') ? '🐄' : '🐐'}</span>
-                        <span>{(item.animalType === 'Cow' || item.animalType === 'Cow Calf') ? 'Calf' : 'Kid'} Status: <strong>{item.calfKidStatus}</strong></span>
+                        <span>
+                          {(item.animalType === 'Cow' || item.animalType === 'Cow Calf') 
+                            ? (language === 'en' ? 'Calf Status: ' : 'கன்றுக்குட்டி நிலை: ') 
+                            : (language === 'en' ? 'Kid Status: ' : 'ஆட்டுக்குட்டி நிலை: ')}
+                          <strong>{item.calfKidStatus}</strong>
+                        </span>
                       </div>
                     )}
 
                     {/* Interactive Buttons (Call, WhatsApp, Maps) */}
                     <div className="card-actions">
-                      <a href={`tel:${vendorInfo.phone}`} className="btn btn-call" title="Call Farm">
-                        <Phone size={16} /> Call
+                      <a href={`tel:${vendorInfo.phone}`} className="btn btn-call" title={language === 'en' ? 'Call Farm' : 'பண்ணையை அழைக்க'}>
+                        <Phone size={16} /> {language === 'en' ? 'Call' : 'அழைக்கவும்'}
                       </a>
                       
                       {vendorInfo.whatsappLink && (
                         <a 
                           href={waLink} 
                           className="btn btn-whatsapp" 
-                          title="WhatsApp Enquiry"
+                          title={language === 'en' ? 'WhatsApp Enquiry' : 'வாட்ஸ்அப் விசாரணை'}
                         >
-                          <MessageSquare size={16} /> WhatsApp
+                          <MessageSquare size={16} /> {language === 'en' ? 'WhatsApp' : 'வாட்ஸ்அப்'}
                         </a>
                       )}
                       
@@ -468,9 +527,9 @@ function App() {
                         className="btn btn-maps" 
                         target="_blank" 
                         rel="noopener noreferrer"
-                        title="View Location"
+                        title={language === 'en' ? 'View Location' : 'முகவரி பார்க்க'}
                       >
-                        <MapPin size={16} /> Location
+                        <MapPin size={16} /> {language === 'en' ? 'Location' : 'முகவரி'}
                       </a>
                     </div>
                   </div>
@@ -496,9 +555,13 @@ function App() {
               <img src={selectedMedia.url} alt="Full view" style={{ width: '100%', maxHeight: '80vh', objectFit: 'contain', borderRadius: '12px', background: 'rgba(0,0,0,0.1)' }} />
             )}
             <div className="modal-info" style={{ background: 'white', borderRadius: '12px', marginTop: '1rem', padding: '1.25rem' }}>
-              <h3>{selectedMedia.type === 'video' ? '📽️ Livestock Video Tour' : '📸 Full-Size Photo'}</h3>
+              <h3>
+                {selectedMedia.type === 'video' 
+                  ? (language === 'en' ? '📽️ Livestock Video Tour' : '📽️ கால்நடை வீடியோ ஆய்வு') 
+                  : (language === 'en' ? '📸 Full-Size Photo' : '📸 முழு அளவு புகைப்படம்')}
+              </h3>
               <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginTop: '0.25rem' }}>
-                Sekar Dairy Farm verified high-quality media inspection.
+                {language === 'en' ? 'Sekar Dairy Farm verified high-quality media inspection.' : 'சேகர் டெய்ரி ஃபார்ம் சரிபார்க்கப்பட்ட உயர்ரக ஊடக ஆய்வு.'}
               </p>
             </div>
           </div>
@@ -506,9 +569,9 @@ function App() {
       )}
 
       <footer>
-        <p>&copy; {new Date().getFullYear()} Sekar Dairy Farm. All Rights Reserved.</p>
+        <p>&copy; {new Date().getFullYear()} {language === 'en' ? 'Sekar Dairy Farm. All Rights Reserved.' : 'சேகர் டெய்ரி ஃபார்ம். அனைத்து உரிமைகளும் பாதுகாக்கப்பட்டவை.'}</p>
         <p style={{ marginTop: '0.5rem', fontSize: '0.8rem', opacity: 0.7 }}>
-          Breeding quality livestock for generations. Configured for quick Vercel & Render hosting.
+          {language === 'en' ? 'Breeding quality livestock for generations. Configured for quick Vercel & Render hosting.' : 'தலைமுறை தலைமுறையாக தரமான கால்நடை வளர்ப்பு. Vercel & Render இல் எளிதாக ஹோஸ்ட் செய்யப்பட்டுள்ளது.'}
         </p>
       </footer>
     </div>
