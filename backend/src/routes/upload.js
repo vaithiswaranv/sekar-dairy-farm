@@ -82,6 +82,21 @@ router.post('/', [auth, upload.single('media')], async (req, res) => {
     let fileData = {};
 
     if (isSupabaseConfigured) {
+      // Ensure bucket exists in Supabase
+      try {
+        const { data: buckets, error: listError } = await supabase.storage.listBuckets();
+        if (!listError) {
+          const bucketExists = buckets.some(b => b.name === supabaseBucket);
+          if (!bucketExists) {
+            await supabase.storage.createBucket(supabaseBucket, {
+              public: true
+            });
+          }
+        }
+      } catch (bucketErr) {
+        console.warn('Supabase bucket check/creation warning:', bucketErr.message);
+      }
+
       // Upload memory buffer directly to Supabase Storage
       const isVideo = req.file.mimetype.startsWith('video/');
       const isAudio = req.file.mimetype.startsWith('audio/');
