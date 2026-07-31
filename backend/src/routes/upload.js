@@ -2,8 +2,15 @@ const express = require('express');
 const router = express.Router();
 const multer = require('multer');
 const path = require('path');
+const fs = require('fs');
 const auth = require('../middleware/auth');
 const mongoose = require('mongoose');
+
+// Ensure local uploads directory exists for fallback disk storage
+const UPLOADS_DIR = path.join(__dirname, '../../uploads');
+if (!fs.existsSync(UPLOADS_DIR)) {
+  fs.mkdirSync(UPLOADS_DIR, { recursive: true });
+}
 
 // Multer Memory Storage Configuration
 const storage = multer.memoryStorage();
@@ -42,7 +49,7 @@ const getBucket = () => {
 };
 
 // @route   POST api/upload
-// @desc    Upload an image, video, or audio directly to MongoDB GridFS
+// @desc    Upload an image, video, or audio directly to MongoDB GridFS with local fallback
 // @access  Private (Vendor only)
 router.post('/', [auth, upload.single('media')], async (req, res) => {
   try {
@@ -51,10 +58,6 @@ router.post('/', [auth, upload.single('media')], async (req, res) => {
     }
 
     const activeBucket = getBucket();
-    if (!activeBucket) {
-      return res.status(503).json({ message: 'Database not connected. Please try again.' });
-    }
-
     const isVideo = req.file.mimetype.startsWith('video/');
     const isAudio = req.file.mimetype.startsWith('audio/');
     
@@ -62,36 +65,53 @@ router.post('/', [auth, upload.single('media')], async (req, res) => {
     const sanitizedBaseName = path.parse(req.file.originalname).name.replace(/[^a-zA-Z0-9_-]/g, '_');
     const fileName = `${Date.now()}-${sanitizedBaseName}${fileExt}`;
 
-    // Upload buffer to GridFS
-    const uploadStream = activeBucket.openUploadStream(fileName, {
-      contentType: req.file.mimetype
-    });
-
-    const fileId = uploadStream.id;
-
-    await new Promise((resolve, reject) => {
-      uploadStream.on('finish', resolve);
-      uploadStream.on('error', reject);
-      uploadStream.end(req.file.buffer);
-    });
-
-    // Construct a permanent URL pointing back to our own download endpoint
     const host = req.get('host');
     const protocol = req.protocol;
     
     // Support HTTPS on hosting systems like Render
     const isLocalhost = host.includes('localhost') || host.includes('127.0.0.1');
     const scheme = isLocalhost ? protocol : 'https';
-    
-    const fileUrl = `${scheme}://${host}/api/upload/file/${fileId}`;
 
-    const fileData = {
-      type: isVideo ? 'video' : (isAudio ? 'audio' : 'image'),
-      url: fileUrl,
-      public_id: fileId.toString()
-    };
+    if (activeBucket) {
+      // Upload buffer to GridFS
+      const uploadStream = activeBucket.openUploadStream(fileName, {
+        contentType: req.file.mimetype
+      });
 
-    res.json(fileData);
+      const fileId = uploadStream.id;
+
+      await new Promise((resolve, reject) => {
+        uploadStream.on('finish', resolve);
+        uploadStream.on('error', reject);
+        uploadStream.end(req.file.buffer);
+      });
+
+      const fileUrl = `${scheme}://${host}/api/upload/file/${fileId}`;
+
+      const fileData = {
+        type: isVideo ? 'video' : (isAudio ? 'audio' : 'image'),
+        url: fileUrl,
+        public_id: fileId.toString()
+      };
+
+      res.json(fileData);
+    } else {
+      // Fallback: save to local disk
+      console.warn('⚠️ Database not connected. Saving file to local disk uploads folder temporarily.');
+      const filePath = path.join(UPLOADS_DIR, fileName);
+      
+      fs.writeFileSync(filePath, req.file.buffer);
+
+      const fileUrl = `${scheme}://${host}/uploads/${fileName}`;
+
+      const fileData = {
+        type: isVideo ? 'video' : (isAudio ? 'audio' : 'image'),
+        url: fileUrl,
+        public_id: fileName
+      };
+
+      res.json(fileData);
+    }
   } catch (err) {
     console.error('Upload route error:', err.message);
     res.status(500).json({ message: `Upload failed: ${err.message}` });
@@ -135,11 +155,22 @@ const deleteFileFromGridFS = async (id) => {
     const activeBucket = getBucket();
     if (!activeBucket || !id) return false;
     
-    const fileId = new mongoose.Types.ObjectId(id);
-    await activeBucket.delete(fileId);
-    return true;
+    // Check if ID is a valid ObjectId (since fallback files have string filenames as public_id)
+    if (mongoose.Types.ObjectId.isValid(id)) {
+      const fileId = new mongoose.Types.ObjectId(id);
+      await activeBucket.delete(fileId);
+      return true;
+    } else {
+      // Fallback: Delete local file if it exists on disk
+      const filePath = path.join(UPLOADS_DIR, id);
+      if (fs.existsSync(filePath)) {
+        fs.unlinkSync(filePath);
+        return true;
+      }
+      return false;
+    }
   } catch (err) {
-    console.warn(`GridFS deletion warning for ${id}:`, err.message);
+    console.warn(`File deletion warning for ${id}:`, err.message);
     return false;
   }
 };
