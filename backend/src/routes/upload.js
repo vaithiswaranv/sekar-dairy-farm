@@ -6,6 +6,7 @@ const fs = require('fs');
 const auth = require('../middleware/auth');
 const { cloudinary, isCloudinaryConfigured } = require('../config/cloudinary');
 const { CloudinaryStorage } = require('multer-storage-cloudinary');
+const { supabase, supabaseBucket, isSupabaseConfigured } = require('../config/supabase');
 
 // Ensure local uploads directory exists
 const UPLOADS_DIR = path.join(__dirname, '../../uploads');
@@ -16,7 +17,10 @@ if (!fs.existsSync(UPLOADS_DIR)) {
 // Multer Storage Configuration
 let storage;
 
-if (isCloudinaryConfigured) {
+if (isSupabaseConfigured) {
+  // Use memory storage to process uploads directly to Supabase buffer
+  storage = multer.memoryStorage();
+} else if (isCloudinaryConfigured) {
   // Cloudinary storage configuration
   storage = new CloudinaryStorage({
     cloudinary: cloudinary,
@@ -77,7 +81,36 @@ router.post('/', [auth, upload.single('media')], async (req, res) => {
 
     let fileData = {};
 
-    if (isCloudinaryConfigured) {
+    if (isSupabaseConfigured) {
+      // Upload memory buffer directly to Supabase Storage
+      const isVideo = req.file.mimetype.startsWith('video/');
+      const isAudio = req.file.mimetype.startsWith('audio/');
+      
+      const fileExt = path.extname(req.file.originalname) || (isVideo ? '.mp4' : (isAudio ? '.mp3' : '.jpg'));
+      const sanitizedBaseName = path.parse(req.file.originalname).name.replace(/[^a-zA-Z0-9_-]/g, '_');
+      const fileName = `${Date.now()}-${sanitizedBaseName}${fileExt}`;
+      
+      const { data, error } = await supabase.storage
+        .from(supabaseBucket)
+        .upload(fileName, req.file.buffer, {
+          contentType: req.file.mimetype,
+          duplex: 'half'
+        });
+
+      if (error) {
+        throw new Error(`Supabase upload error: ${error.message}`);
+      }
+
+      const { data: { publicUrl } } = supabase.storage
+        .from(supabaseBucket)
+        .getPublicUrl(fileName);
+
+      fileData = {
+        type: isVideo ? 'video' : (isAudio ? 'audio' : 'image'),
+        url: publicUrl,
+        public_id: fileName
+      };
+    } else if (isCloudinaryConfigured) {
       // Cloudinary returns path as 'path' or 'url', and public_id as 'filename'
       const isVideo = req.file.mimetype.startsWith('video/');
       const isAudio = req.file.mimetype.startsWith('audio/');
