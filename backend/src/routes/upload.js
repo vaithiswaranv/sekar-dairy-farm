@@ -2,52 +2,11 @@ const express = require('express');
 const router = express.Router();
 const multer = require('multer');
 const path = require('path');
-const fs = require('fs');
 const auth = require('../middleware/auth');
-const { cloudinary, isCloudinaryConfigured } = require('../config/cloudinary');
-const { CloudinaryStorage } = require('multer-storage-cloudinary');
-const { supabase, supabaseBucket, isSupabaseConfigured } = require('../config/supabase');
+const mongoose = require('mongoose');
 
-// Ensure local uploads directory exists
-const UPLOADS_DIR = path.join(__dirname, '../../uploads');
-if (!fs.existsSync(UPLOADS_DIR)) {
-  fs.mkdirSync(UPLOADS_DIR, { recursive: true });
-}
-
-// Multer Storage Configuration
-let storage;
-
-if (isSupabaseConfigured) {
-  // Use memory storage to process uploads directly to Supabase buffer
-  storage = multer.memoryStorage();
-} else if (isCloudinaryConfigured) {
-  // Cloudinary storage configuration
-  storage = new CloudinaryStorage({
-    cloudinary: cloudinary,
-    params: async (req, file) => {
-      const isVideoOrAudio = file.mimetype.startsWith('video/') || file.mimetype.startsWith('audio/');
-      return {
-        folder: 'sekar_dairy_farm',
-        resource_type: isVideoOrAudio ? 'video' : 'image',
-        allowed_formats: isVideoOrAudio 
-          ? ['mp4', 'mov', 'avi', 'mkv', 'webm', 'mp3', 'wav', 'm4a', 'aac', 'ogg'] 
-          : ['jpg', 'jpeg', 'png', 'webp', 'gif'],
-        public_id: `${Date.now()}-${path.parse(file.originalname).name.replace(/[^a-zA-Z0-9_-]/g, '_')}`
-      };
-    }
-  });
-} else {
-  // Local storage configuration
-  storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-      cb(null, UPLOADS_DIR);
-    },
-    filename: (req, file, cb) => {
-      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-      cb(null, `${uniqueSuffix}${path.extname(file.originalname)}`);
-    }
-  });
-}
+// Multer Memory Storage Configuration
+const storage = multer.memoryStorage();
 
 // File filter to validate types
 const fileFilter = (req, file, cb) => {
@@ -70,8 +29,20 @@ const upload = multer({
   }
 });
 
+let bucket;
+
+// Helper to get GridFSBucket instance
+const getBucket = () => {
+  if (!bucket && mongoose.connection.readyState === 1) {
+    bucket = new mongoose.mongo.GridFSBucket(mongoose.connection.db, {
+      bucketName: 'livestock_media'
+    });
+  }
+  return bucket;
+};
+
 // @route   POST api/upload
-// @desc    Upload an image, video, or audio
+// @desc    Upload an image, video, or audio directly to MongoDB GridFS
 // @access  Private (Vendor only)
 router.post('/', [auth, upload.single('media')], async (req, res) => {
   try {
@@ -79,76 +50,46 @@ router.post('/', [auth, upload.single('media')], async (req, res) => {
       return res.status(400).json({ message: 'No file uploaded' });
     }
 
-    let fileData = {};
-
-    if (isSupabaseConfigured) {
-      // Ensure bucket exists in Supabase
-      try {
-        const { data: buckets, error: listError } = await supabase.storage.listBuckets();
-        if (!listError) {
-          const bucketExists = buckets.some(b => b.name === supabaseBucket);
-          if (!bucketExists) {
-            await supabase.storage.createBucket(supabaseBucket, {
-              public: true
-            });
-          }
-        }
-      } catch (bucketErr) {
-        console.warn('Supabase bucket check/creation warning:', bucketErr.message);
-      }
-
-      // Upload memory buffer directly to Supabase Storage
-      const isVideo = req.file.mimetype.startsWith('video/');
-      const isAudio = req.file.mimetype.startsWith('audio/');
-      
-      const fileExt = path.extname(req.file.originalname) || (isVideo ? '.mp4' : (isAudio ? '.mp3' : '.jpg'));
-      const sanitizedBaseName = path.parse(req.file.originalname).name.replace(/[^a-zA-Z0-9_-]/g, '_');
-      const fileName = `${Date.now()}-${sanitizedBaseName}${fileExt}`;
-      
-      const { data, error } = await supabase.storage
-        .from(supabaseBucket)
-        .upload(fileName, req.file.buffer, {
-          contentType: req.file.mimetype,
-          duplex: 'half'
-        });
-
-      if (error) {
-        throw new Error(`Supabase upload error: ${error.message}`);
-      }
-
-      const { data: { publicUrl } } = supabase.storage
-        .from(supabaseBucket)
-        .getPublicUrl(fileName);
-
-      fileData = {
-        type: isVideo ? 'video' : (isAudio ? 'audio' : 'image'),
-        url: publicUrl,
-        public_id: fileName
-      };
-    } else if (isCloudinaryConfigured) {
-      // Cloudinary returns path as 'path' or 'url', and public_id as 'filename'
-      const isVideo = req.file.mimetype.startsWith('video/');
-      const isAudio = req.file.mimetype.startsWith('audio/');
-      fileData = {
-        type: isVideo ? 'video' : (isAudio ? 'audio' : 'image'),
-        url: req.file.path,
-        public_id: req.file.filename
-      };
-    } else {
-      // Local storage details
-      const isVideo = req.file.mimetype.startsWith('video/');
-      const isAudio = req.file.mimetype.startsWith('audio/');
-      // Construct a URL path (e.g. /uploads/filename)
-      const host = req.get('host');
-      const protocol = req.protocol;
-      const fileUrl = `${protocol}://${host}/uploads/${req.file.filename}`;
-      
-      fileData = {
-        type: isVideo ? 'video' : (isAudio ? 'audio' : 'image'),
-        url: fileUrl,
-        public_id: req.file.filename // local filename as public_id
-      };
+    const activeBucket = getBucket();
+    if (!activeBucket) {
+      return res.status(503).json({ message: 'Database not connected. Please try again.' });
     }
+
+    const isVideo = req.file.mimetype.startsWith('video/');
+    const isAudio = req.file.mimetype.startsWith('audio/');
+    
+    const fileExt = path.extname(req.file.originalname) || (isVideo ? '.mp4' : (isAudio ? '.mp3' : '.jpg'));
+    const sanitizedBaseName = path.parse(req.file.originalname).name.replace(/[^a-zA-Z0-9_-]/g, '_');
+    const fileName = `${Date.now()}-${sanitizedBaseName}${fileExt}`;
+
+    // Upload buffer to GridFS
+    const uploadStream = activeBucket.openUploadStream(fileName, {
+      contentType: req.file.mimetype
+    });
+
+    const fileId = uploadStream.id;
+
+    await new Promise((resolve, reject) => {
+      uploadStream.on('finish', resolve);
+      uploadStream.on('error', reject);
+      uploadStream.end(req.file.buffer);
+    });
+
+    // Construct a permanent URL pointing back to our own download endpoint
+    const host = req.get('host');
+    const protocol = req.protocol;
+    
+    // Support HTTPS on hosting systems like Render
+    const isLocalhost = host.includes('localhost') || host.includes('127.0.0.1');
+    const scheme = isLocalhost ? protocol : 'https';
+    
+    const fileUrl = `${scheme}://${host}/api/upload/file/${fileId}`;
+
+    const fileData = {
+      type: isVideo ? 'video' : (isAudio ? 'audio' : 'image'),
+      url: fileUrl,
+      public_id: fileId.toString()
+    };
 
     res.json(fileData);
   } catch (err) {
@@ -157,4 +98,52 @@ router.post('/', [auth, upload.single('media')], async (req, res) => {
   }
 });
 
+// @route   GET api/upload/file/:id
+// @desc    Retrieve file from GridFS database
+// @access  Public
+router.get('/file/:id', async (req, res) => {
+  try {
+    const activeBucket = getBucket();
+    if (!activeBucket) {
+      return res.status(503).json({ message: 'Storage database not connected' });
+    }
+
+    const fileId = new mongoose.Types.ObjectId(req.params.id);
+
+    // Find file metadata document to set content type
+    const files = await activeBucket.find({ _id: fileId }).toArray();
+    if (!files || files.length === 0) {
+      return res.status(404).json({ message: 'File not found' });
+    }
+
+    res.set('Content-Type', files[0].contentType);
+    // Cache files for 7 days since they are permanent
+    res.set('Cache-Control', 'public, max-age=604800');
+    
+    // Pipe download stream to client response
+    const downloadStream = activeBucket.openDownloadStream(fileId);
+    downloadStream.pipe(res);
+  } catch (err) {
+    console.error('File retrieval error:', err.message);
+    res.status(404).json({ message: 'File not found' });
+  }
+});
+
+// Helper function to delete file from GridFS programmatically
+const deleteFileFromGridFS = async (id) => {
+  try {
+    const activeBucket = getBucket();
+    if (!activeBucket || !id) return false;
+    
+    const fileId = new mongoose.Types.ObjectId(id);
+    await activeBucket.delete(fileId);
+    return true;
+  } catch (err) {
+    console.warn(`GridFS deletion warning for ${id}:`, err.message);
+    return false;
+  }
+};
+
+// Export both the router and the deletion helper
+router.deleteFileFromGridFS = deleteFileFromGridFS;
 module.exports = router;

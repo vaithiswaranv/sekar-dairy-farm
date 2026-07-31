@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const listingService = require('../services/listingService');
 const auth = require('../middleware/auth');
+const uploadRouter = require('./upload');
 
 // @route   GET api/listings
 // @desc    Get all listings (with filters)
@@ -146,6 +147,24 @@ router.delete('/:id', auth, async (req, res) => {
     const listing = await listingService.getListingById(req.params.id);
     if (!listing) {
       return res.status(404).json({ message: 'Listing not found' });
+    }
+
+    // Delete associated files from GridFS database storage
+    if (listing.media && listing.media.length > 0) {
+      for (const item of listing.media) {
+        if (item.public_id) {
+          await uploadRouter.deleteFileFromGridFS(item.public_id);
+        }
+      }
+    }
+
+    // Delete associated voice note from GridFS
+    if (listing.voiceDescription) {
+      const parts = listing.voiceDescription.split('/');
+      const voiceFileId = parts[parts.length - 1];
+      if (voiceFileId) {
+        await uploadRouter.deleteFileFromGridFS(voiceFileId);
+      }
     }
 
     await listingService.deleteListing(req.params.id);
