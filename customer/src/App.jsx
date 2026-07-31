@@ -50,6 +50,19 @@ function App() {
   const [listings, setListings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [showWakeupMessage, setShowWakeupMessage] = useState(false);
+
+  useEffect(() => {
+    let timer;
+    if (loading) {
+      timer = setTimeout(() => {
+        setShowWakeupMessage(true);
+      }, 3500);
+    } else {
+      setShowWakeupMessage(false);
+    }
+    return () => clearTimeout(timer);
+  }, [loading]);
   
   // Vendor Info State
   const [vendorInfo, setVendorInfo] = useState({
@@ -326,6 +339,13 @@ function App() {
           <div style={{ textAlign: 'center', padding: '4rem 0' }}>
             <RefreshCw className="animate-spin" size={40} style={{ color: 'var(--primary-color)' }} />
             <p style={{ marginTop: '1rem', fontWeight: 600 }}>{language === 'en' ? 'Loading premium listings...' : 'தரமான கால்நடைகளை ஏற்றுகிறது...'}</p>
+            {showWakeupMessage && (
+              <p style={{ marginTop: '0.75rem', color: 'var(--text-secondary)', fontSize: '0.85rem', maxWidth: '400px', margin: '0.75rem auto 0 auto', lineHeight: '1.4' }}>
+                ⚠️ {language === 'en' 
+                  ? 'Note: Render Database Server is waking up from sleep. This may take up to 45 seconds on the first visit...' 
+                  : 'குறிப்பு: தரவுத்தள சேவையகம் தூக்கத்திலிருந்து துவங்குகிறது. முதல் முறை தொடங்க 45 வினாடிகள் வரை ஆகலாம்...'}
+              </p>
+            )}
           </div>
         ) : error ? (
           <div className="empty-state">

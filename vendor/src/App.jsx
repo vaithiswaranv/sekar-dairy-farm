@@ -46,6 +46,19 @@ function App() {
   const [listings, setListings] = useState([]);
   const [loadingListings, setLoadingListings] = useState(false);
   const [alert, setAlert] = useState(null); // { type: 'success'|'error', message: string }
+  const [showWakeupMessage, setShowWakeupMessage] = useState(false);
+
+  useEffect(() => {
+    let timer;
+    if (authLoading || loadingListings) {
+      timer = setTimeout(() => {
+        setShowWakeupMessage(true);
+      }, 3500);
+    } else {
+      setShowWakeupMessage(false);
+    }
+    return () => clearTimeout(timer);
+  }, [authLoading, loadingListings]);
 
   // Modal / Form state
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -630,6 +643,14 @@ function App() {
           </button>
         </form>
         
+        {showWakeupMessage && (
+          <p style={{ marginTop: '1rem', color: '#ff6b6b', fontSize: '0.8rem', textAlign: 'center', lineHeight: '1.4' }}>
+            ⚠️ {language === 'en' 
+              ? 'Render Database Server is waking up from sleep. This may take up to 45 seconds on the first visit...' 
+              : 'குறிப்பு: தரவுத்தள சேவையகம் தூக்கத்திலிருந்து துவங்குகிறது. முதல் முறை தொடங்க 45 வினாடிகள் வரை ஆகலாம்...'}
+          </p>
+        )}
+        
         <p style={{ textAlign: 'center', marginTop: '2rem', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
           {language === 'en' ? 'Authorized Sekar Dairy Farm staff only.' : 'சேகர் பண்ணை அங்கீகரிக்கப்பட்ட பணியாளர்கள் மட்டுமே.'}
         </p>
@@ -790,7 +811,14 @@ function App() {
         {loadingListings ? (
           <div style={{ textAlign: 'center', padding: '4rem 0' }}>
             <RefreshCw className="animate-spin" size={40} style={{ color: 'var(--primary-color)' }} />
-            <p style={{ marginTop: '1rem', fontWeight: 600 }}>Loading farm database...</p>
+            <p style={{ marginTop: '1rem', fontWeight: 600 }}>{language === 'en' ? 'Loading farm database...' : 'பண்ணைத் தரவுத்தளத்தை ஏற்றுகிறது...'}</p>
+            {showWakeupMessage && (
+              <p style={{ marginTop: '0.75rem', color: 'var(--text-secondary)', fontSize: '0.85rem', maxWidth: '400px', margin: '0.75rem auto 0 auto', lineHeight: '1.4' }}>
+                ⚠️ {language === 'en' 
+                  ? 'Note: Render Database Server is waking up from sleep. This may take up to 45 seconds on the first visit...' 
+                  : 'குறிப்பு: தரவுத்தள சேவையகம் தூக்கத்திலிருந்து துவங்குகிறது. முதல் முறை தொடங்க 45 வினாடிகள் வரை ஆகலாம்...'}
+              </p>
+            )}
           </div>
         ) : listings.length === 0 ? (
           <div className="empty-state" style={{ padding: '6rem 2rem' }}>
