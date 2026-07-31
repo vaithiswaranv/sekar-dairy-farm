@@ -459,40 +459,51 @@ function App() {
                     </div>
 
 
-                    <p className="card-desc" style={{ whiteSpace: 'pre-line', height: 'auto', maxHeight: 'none', display: 'block', overflow: 'visible', margin: '0.5rem 0' }}>
-                      {(() => {
-                        const desc = item.description || '';
-                        const isExpanded = !!expandedDescs[id];
-                        const maxLength = 120;
-                        
-                        if (desc.length <= maxLength) {
-                          return <span>{desc}</span>;
-                        }
-                        
-                        return (
-                          <span>
-                            {isExpanded ? desc : `${desc.slice(0, maxLength)}...`}
-                            <button 
-                              onClick={() => toggleDesc(id)} 
-                              style={{ 
-                                background: 'transparent', 
-                                border: 'none', 
-                                color: 'var(--primary-color)', 
-                                fontWeight: '700', 
-                                fontSize: '0.85rem', 
-                                marginLeft: '0.35rem', 
-                                cursor: 'pointer',
-                                padding: 0,
-                                textDecoration: 'underline',
-                                fontFamily: 'inherit'
-                              }}
-                            >
-                              {isExpanded ? (language === 'en' ? 'Read Less' : 'சுருக்கவும்') : (language === 'en' ? 'Read More' : 'மேலும் படிக்க')}
-                            </button>
-                          </span>
-                        );
-                      })()}
-                    </p>
+                    {item.description && (
+                      <p className="card-desc" style={{ whiteSpace: 'pre-line', height: 'auto', maxHeight: 'none', display: 'block', overflow: 'visible', margin: '0.5rem 0' }}>
+                        {(() => {
+                          const desc = item.description || '';
+                          const isExpanded = !!expandedDescs[id];
+                          const maxLength = 120;
+                          
+                          if (desc.length <= maxLength) {
+                            return <span>{desc}</span>;
+                          }
+                          
+                          return (
+                            <span>
+                              {isExpanded ? desc : `${desc.slice(0, maxLength)}...`}
+                              <button 
+                                onClick={() => toggleDesc(id)} 
+                                style={{ 
+                                  background: 'transparent', 
+                                  border: 'none', 
+                                  color: 'var(--primary-color)', 
+                                  fontWeight: '700', 
+                                  fontSize: '0.85rem', 
+                                  marginLeft: '0.35rem', 
+                                  cursor: 'pointer',
+                                  padding: 0,
+                                  textDecoration: 'underline',
+                                  fontFamily: 'inherit'
+                                }}
+                              >
+                                {isExpanded ? (language === 'en' ? 'Read Less' : 'சுருக்கவும்') : (language === 'en' ? 'Read More' : 'மேலும் படிக்க')}
+                              </button>
+                            </span>
+                          );
+                        })()}
+                      </p>
+                    )}
+
+                    {item.voiceDescription && (
+                      <div style={{ marginTop: '0.75rem', marginBottom: '0.75rem', display: 'flex', flexDirection: 'column', gap: '0.35rem', border: '1px solid var(--border-color)', borderRadius: '8px', padding: '0.75rem', background: 'var(--primary-glow)' }}>
+                        <span style={{ fontSize: '0.8rem', fontWeight: '800', color: 'var(--primary-color)', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                          🔊 {language === 'en' ? 'Voice Description' : 'குரல் வழி விளக்கம்'}
+                        </span>
+                        <audio src={item.voiceDescription} controls style={{ width: '100%', height: '40px', borderRadius: '4px', outline: 'none' }} />
+                      </div>
+                    )}
 
                     {item.calfKidStatus && (
                       <div style={{ fontSize: '0.85rem', fontWeight: '600', color: 'var(--primary-color)', display: 'flex', alignItems: 'center', gap: '0.35rem', background: 'var(--primary-glow)', padding: '0.4rem 0.75rem', borderRadius: '8px', border: '1px solid var(--border-color)' }}>

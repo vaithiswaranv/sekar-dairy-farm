@@ -52,6 +52,7 @@ router.post('/', auth, async (req, res) => {
     gender,
     breed, 
     description, 
+    voiceDescription,
     age, 
     teethCount, 
     milkCapacity, 
@@ -61,9 +62,9 @@ router.post('/', auth, async (req, res) => {
     calfKidStatus 
   } = req.body;
 
-  // Mandatory fields validation
-  if (!animalName || !animalType || !gender || !breed || !description || age === undefined || teethCount === undefined || price === undefined) {
-    return res.status(400).json({ message: 'Please include all mandatory fields: Animal Name, Category, Gender, Breed, Description, Age, Teeth count, and Price.' });
+  // Mandatory fields validation (requires either description OR voiceDescription)
+  if (!animalName || !animalType || !gender || !breed || (!description && !voiceDescription) || age === undefined || teethCount === undefined || price === undefined) {
+    return res.status(400).json({ message: 'Please include all mandatory fields: Animal Name, Category, Gender, Breed, Age, Teeth count, Price, and either Description or Voice Message.' });
   }
 
   try {
@@ -73,7 +74,8 @@ router.post('/', auth, async (req, res) => {
       animalType,
       gender,
       breed,
-      description,
+      description: description || '',
+      voiceDescription: voiceDescription || '',
       age: String(age),
       teethCount: String(teethCount),
       milkCapacity: isAdultFemale && milkCapacity !== null && milkCapacity !== undefined && milkCapacity !== '' ? String(milkCapacity) : '',
@@ -101,6 +103,13 @@ router.put('/:id', auth, async (req, res) => {
     }
 
     const updatePayload = { ...req.body };
+    
+    // Validate that at least one description type remains present
+    const finalDesc = updatePayload.description !== undefined ? updatePayload.description : listing.description;
+    const finalVoice = updatePayload.voiceDescription !== undefined ? updatePayload.voiceDescription : listing.voiceDescription;
+    if (!finalDesc && !finalVoice) {
+      return res.status(400).json({ message: 'At least one of Description or Voice Message must be provided.' });
+    }
     
     // Cast fields if present in update payload
     if (updatePayload.age !== undefined) updatePayload.age = String(updatePayload.age);

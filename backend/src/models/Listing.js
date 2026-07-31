@@ -25,8 +25,13 @@ const ListingSchema = new mongoose.Schema({
   },
   description: {
     type: String,
-    required: true,
-    trim: true
+    required: false,
+    trim: true,
+    default: ''
+  },
+  voiceDescription: {
+    type: String,
+    default: ''
   },
   age: {
     type: String,

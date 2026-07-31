@@ -57,6 +57,7 @@ function App() {
   const [gender, setGender] = useState('Female');
   const [breed, setBreed] = useState('');
   const [description, setDescription] = useState('');
+  const [voiceDescription, setVoiceDescription] = useState('');
   const [age, setAge] = useState('');
   const [teethCount, setTeethCount] = useState('');
   const [milkCapacity, setMilkCapacity] = useState('');
@@ -70,6 +71,12 @@ function App() {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState('');
+  
+  // Voice Recorder State
+  const [isRecording, setIsRecording] = useState(false);
+  const recorderRef = useRef(null);
+  const chunksRef = useRef([]);
+  const audioFileInputRef = useRef(null);
   
   // Vendor settings fields
   const [phoneSetting, setPhoneSetting] = useState('');
@@ -291,7 +298,8 @@ function App() {
       setAnimalType(listing.animalType || 'Cow');
       setGender(listing.gender || 'Female');
       setBreed(listing.breed);
-      setDescription(listing.description);
+      setDescription(listing.description || '');
+      setVoiceDescription(listing.voiceDescription || '');
       setAge(listing.age !== undefined ? listing.age.toString() : '');
       setTeethCount(listing.teethCount !== undefined ? listing.teethCount.toString() : '');
       setMilkCapacity(listing.milkCapacity !== null && listing.milkCapacity !== undefined ? listing.milkCapacity.toString() : '');
@@ -319,6 +327,7 @@ function App() {
       setGender('Female');
       setBreed('');
       setDescription('');
+      setVoiceDescription('');
       setAge('');
       setTeethCount('');
       setMilkCapacity('');
@@ -331,11 +340,76 @@ function App() {
     setIsModalOpen(true);
   };
 
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const recorder = new MediaRecorder(stream);
+      recorderRef.current = recorder;
+      chunksRef.current = [];
+
+      recorder.ondataavailable = (e) => {
+        if (e.data.size > 0) {
+          chunksRef.current.push(e.data);
+        }
+      };
+
+      recorder.onstop = async () => {
+        const audioBlob = new Blob(chunksRef.current, { type: 'audio/mp3' });
+        uploadAudioFile(audioBlob);
+        stream.getTracks().forEach(track => track.stop());
+      };
+
+      recorder.start();
+      setIsRecording(true);
+      setUploadError('');
+    } catch (err) {
+      console.error('Mic access error:', err);
+      setUploadError('Microphone access denied or not supported.');
+    }
+  };
+
+  const stopRecording = () => {
+    if (recorderRef.current && isRecording) {
+      recorderRef.current.stop();
+      setIsRecording(false);
+    }
+  };
+
+  const uploadAudioFile = async (fileOrBlob) => {
+    try {
+      setUploading(true);
+      setUploadProgress(15);
+      const formData = new FormData();
+      const filename = fileOrBlob.name || `voice-note-${Date.now()}.mp3`;
+      formData.append('media', fileOrBlob, filename);
+
+      const res = await fetch(`${API_BASE}/api/upload`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
+        body: formData
+      });
+
+      setUploadProgress(75);
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || 'Upload failed');
+
+      setUploadProgress(100);
+      setVoiceDescription(data.url);
+      setUploading(false);
+    } catch (err) {
+      console.error(err);
+      setUploadError(`Audio upload failed: ${err.message}`);
+      setUploading(false);
+    }
+  };
+
   // Handle Form Submit
   const handleSaveListing = async (e) => {
     e.preventDefault();
-    if (!animalName || !animalType || !gender || !breed || !description || age === '' || !teethCount || !price) {
-      setAlert({ type: 'error', message: 'Please fill in all mandatory fields.' });
+    if (!animalName || !animalType || !gender || !breed || (!description && !voiceDescription) || age === '' || !teethCount || !price) {
+      setAlert({ type: 'error', message: 'Please fill in all mandatory fields (Description or Voice Message must be provided).' });
       return;
     }
 
@@ -354,6 +428,7 @@ function App() {
       gender,
       breed,
       description,
+      voiceDescription,
       age: String(age),
       teethCount: String(teethCount),
       milkCapacity: finalMilk,
@@ -1021,8 +1096,75 @@ function App() {
                     value={description} 
                     onChange={(e) => setDescription(e.target.value)} 
                     placeholder={language === 'en' ? "Describe details like health status, vaccination status, delivery counts, behavior traits..." : "சுகாதார நிலை, தடுப்பூசி விவரங்கள், ஈற்று எண்ணிக்கை போன்றவற்றை விவரிக்கவும்..."} 
-                    required
+                    required={!voiceDescription}
                   />
+
+                  {/* Voice Description Section */}
+                  <div style={{ marginTop: '1rem', border: '1px dashed var(--border-color)', padding: '1rem', borderRadius: '8px', background: 'var(--primary-glow)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                      <span className="form-label" style={{ fontWeight: '700', margin: 0 }}>
+                        {language === 'en' ? '🎙️ Voice Description' : '🎙️ குரல் வழி விளக்கம்'}
+                      </span>
+                      {voiceDescription && (
+                        <button 
+                          type="button" 
+                          onClick={() => setVoiceDescription('')} 
+                          className="btn-secondary" 
+                          style={{ color: 'var(--alert-error-color)', border: '1px solid var(--alert-error-color)', padding: '0.2rem 0.5rem', fontSize: '0.75rem', borderRadius: '4px', cursor: 'pointer' }}
+                        >
+                          {language === 'en' ? 'Delete Voice' : 'குரல் பதிவை நீக்கு'}
+                        </button>
+                      )}
+                    </div>
+
+                    {voiceDescription ? (
+                      <div>
+                        <audio src={voiceDescription} controls style={{ width: '100%', borderRadius: '4px' }} />
+                      </div>
+                    ) : (
+                      <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                        <button 
+                          type="button" 
+                          onClick={isRecording ? stopRecording : startRecording} 
+                          className={`btn ${isRecording ? 'btn-logout' : 'btn-primary'}`}
+                          style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', padding: '0.5rem 1rem', borderRadius: '6px', cursor: 'pointer', border: 'none', fontWeight: '600', fontSize: '0.85rem' }}
+                        >
+                          {isRecording ? (
+                            <>
+                              <span style={{ display: 'inline-block', width: '8px', height: '8px', borderRadius: '50%', background: 'red', animation: 'pulse 1s infinite' }}></span>
+                              {language === 'en' ? 'Stop Recording' : 'பதிவை நிறுத்தவும்'}
+                            </>
+                          ) : (
+                            <>
+                              <span>🎙️</span>
+                              {language === 'en' ? 'Record Voice Note' : 'குரல் பதிவு செய்ய'}
+                            </>
+                          )}
+                        </button>
+
+                        <button 
+                          type="button" 
+                          onClick={() => audioFileInputRef.current.click()} 
+                          className="btn-secondary"
+                          style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', padding: '0.5rem 1rem', borderRadius: '6px', cursor: 'pointer', fontSize: '0.85rem', fontWeight: '600', border: '1px solid var(--border-color)', background: 'white' }}
+                        >
+                          📁 {language === 'en' ? 'Upload Audio File' : 'ஒலி கோப்பை பதிவேற்ற'}
+                        </button>
+
+                        <input 
+                          type="file" 
+                          ref={audioFileInputRef} 
+                          style={{ display: 'none' }} 
+                          accept="audio/*" 
+                          onChange={(e) => {
+                            if (e.target.files && e.target.files[0]) {
+                              uploadAudioFile(e.target.files[0]);
+                            }
+                          }}
+                        />
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 {/* Media uploads */}

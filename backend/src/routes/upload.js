@@ -21,12 +21,12 @@ if (isCloudinaryConfigured) {
   storage = new CloudinaryStorage({
     cloudinary: cloudinary,
     params: async (req, file) => {
-      const isVideo = file.mimetype.startsWith('video/');
+      const isVideoOrAudio = file.mimetype.startsWith('video/') || file.mimetype.startsWith('audio/');
       return {
         folder: 'sekar_dairy_farm',
-        resource_type: isVideo ? 'video' : 'image',
-        allowed_formats: isVideo 
-          ? ['mp4', 'mov', 'avi', 'mkv', 'webm'] 
+        resource_type: isVideoOrAudio ? 'video' : 'image',
+        allowed_formats: isVideoOrAudio 
+          ? ['mp4', 'mov', 'avi', 'mkv', 'webm', 'mp3', 'wav', 'm4a', 'aac', 'ogg'] 
           : ['jpg', 'jpeg', 'png', 'webp', 'gif'],
         public_id: `${Date.now()}-${path.parse(file.originalname).name.replace(/[^a-zA-Z0-9_-]/g, '_')}`
       };
@@ -49,11 +49,12 @@ if (isCloudinaryConfigured) {
 const fileFilter = (req, file, cb) => {
   const isImage = file.mimetype.startsWith('image/');
   const isVideo = file.mimetype.startsWith('video/');
+  const isAudio = file.mimetype.startsWith('audio/');
   
-  if (isImage || isVideo) {
+  if (isImage || isVideo || isAudio) {
     cb(null, true);
   } else {
-    cb(new Error('Invalid file type. Only images and videos are allowed!'), false);
+    cb(new Error('Invalid file type. Only images, videos, and audio are allowed!'), false);
   }
 };
 
@@ -66,7 +67,7 @@ const upload = multer({
 });
 
 // @route   POST api/upload
-// @desc    Upload an image or video
+// @desc    Upload an image, video, or audio
 // @access  Private (Vendor only)
 router.post('/', [auth, upload.single('media')], async (req, res) => {
   try {
@@ -79,21 +80,23 @@ router.post('/', [auth, upload.single('media')], async (req, res) => {
     if (isCloudinaryConfigured) {
       // Cloudinary returns path as 'path' or 'url', and public_id as 'filename'
       const isVideo = req.file.mimetype.startsWith('video/');
+      const isAudio = req.file.mimetype.startsWith('audio/');
       fileData = {
-        type: isVideo ? 'video' : 'image',
+        type: isVideo ? 'video' : (isAudio ? 'audio' : 'image'),
         url: req.file.path,
         public_id: req.file.filename
       };
     } else {
       // Local storage details
       const isVideo = req.file.mimetype.startsWith('video/');
+      const isAudio = req.file.mimetype.startsWith('audio/');
       // Construct a URL path (e.g. /uploads/filename)
       const host = req.get('host');
       const protocol = req.protocol;
       const fileUrl = `${protocol}://${host}/uploads/${req.file.filename}`;
       
       fileData = {
-        type: isVideo ? 'video' : 'image',
+        type: isVideo ? 'video' : (isAudio ? 'audio' : 'image'),
         url: fileUrl,
         public_id: req.file.filename // local filename as public_id
       };
