@@ -28,7 +28,7 @@ if (isCloudinaryConfigured) {
         allowed_formats: isVideo 
           ? ['mp4', 'mov', 'avi', 'mkv', 'webm'] 
           : ['jpg', 'jpeg', 'png', 'webp', 'gif'],
-        public_id: `${Date.now()}-${path.parse(file.originalname).name}`
+        public_id: `${Date.now()}-${path.parse(file.originalname).name.replace(/[^a-zA-Z0-9_-]/g, '_')}`
       };
     }
   });
